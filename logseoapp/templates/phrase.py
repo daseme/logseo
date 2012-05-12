@@ -28,21 +28,29 @@
 </span>
 </div>
 
+<div>
+<h1>Pages accessed by this search term</h1>
 {% regroup pages by page_id__page as rank_list %}
-
-<ul>
+<table class="pretty">
+		<thead>
+		<tr>
+			<th>page</th>
+			<th>rankings</th>
+      </tr>
+      </thead>
+	    <tbody>
 {% for page_id__page in rank_list %}
-
-    <li>{{ page_id__page.grouper }}
+<tr><td>{{ page_id__page.grouper }}</td><td>
         <span class="inlinesparkline" style="width:40px;">
         {% for item in page_id__page.list %}
         -{{ item.position }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
-        </span>
-    </li>
-{% endfor %}
-</ul>
-{% endblock %}
 
+    </td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
+</div>
 {% include "footer.py" %}
 

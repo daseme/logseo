@@ -3,22 +3,26 @@ from django.views.generic import simple
 from django.shortcuts import render_to_response
 from logseoapp.models import LogSeRank, Engine, Kw, Page
 from django.http import HttpResponse
-from django.db.models import Q, Avg, Count, StdDev
+from django.db.models import Avg, Count, StdDev
 from django.db import connection
 
 
 
-def get_ranks(request):
-    """ View all objects """
-    kw_list = []
-    #phrases = Kws.objects.filter(Q(phrase__startswith = 'nsac',tags__name__in=["branded"])).values()
-    #phrases = Kw.objects.get(phrase = 'nsac')
-    phrase_cnt = Kw.objects.kw_count('nsac')
+def get_ranks(request, start_date="", end_date=""):
+    """ get rank data for kws, defaults to entire data-set """
 
-    #ip_count = LogSeRank.objects.ip_count(3518)
+    if 'start_date' and 'end_date' in request.GET:
+        start_date = request.GET['start_date']
+        end_date   = request.GET['end_date']
+    else:
+        start_date = '2011-06-01'
+        end_date   = '2011-07-31'
+
+    #phrases = Kws.objects.filter(Q(phrase__startswith = 'nsac',tags__name__in=["branded"])).values()
     #pc = LogSeRank.objects.filter(engine_id__engine__contains='Google').select_related()  # -> WORKS
+
     ip_count = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__tags__name').filter( position__gt = 0,
-            engine_id__engine__contains = 'Google').annotate(num_ips=Count('ip', distinct = True),
+            engine_id__engine__contains = 'Google', refdate__range=(start_date, end_date)).annotate(num_ips=Count('ip', distinct = True),
                 num_rank=Count('position'), avg_rank=Avg('position'), st_rank = StdDev('position'))[:4000] # FUCKING WORKS
 
     for dict in ip_count:
@@ -32,9 +36,8 @@ def get_ranks(request):
     sql = connection.queries
 
 
-    return render_to_response('template.py', { 'sql':sql,
-        'count':phrase_cnt, 'xphrase':kw_list,
-        'phrase_ip':phrase_ip, 'ip_cnts':ip_count, 'dates':dates})
+    return render_to_response('template.py', { 'sql':sql,'phrase_ip':phrase_ip,'start_date':start_date,'end_date':end_date,
+                                               'ip_cnts':ip_count, 'dates':dates})
 
 def get_phrase(request, phrase):
     """ View all objects """

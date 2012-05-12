@@ -15,15 +15,16 @@
 			<div id="container">
 
 <form method="GET">
-<select name="from_date">
+<select name="start_date">
 {% for date in dates %}
-    <option value="{{ date.refdate }}">{{ date.refdate }}</option>
+    <option value="{{ date.refdate }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
 {% endfor %}
+
 </select>
 
-<select name="to_date">
+<select name="end_date">
 {% for date in dates %}
-    <option value="{{ date.refdate }}">{{ date.refdate }}</option>
+    <option value="{{ date.refdate }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
 {% endfor %}
 </select>
 <input type="submit" name="submit" class="submit" value="filter dates" />
