@@ -9,6 +9,7 @@ urlpatterns = patterns('',
     url(r'^testing/$', 'logseoapp.views.show_object'),
     url(r'^ranks/$', 'logseoapp.views.get_ranks'),
     (r'^phrase/(\d{1,6})/$', 'logseoapp.views.get_phrase'),
+    (r'^search/', include('haystack.urls')),
     # Examples:
     # url(r'^$', 'logseo.views.home', name='home'),
     # url(r'^logseo/', include('logseo.foo.urls')),

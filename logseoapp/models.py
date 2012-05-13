@@ -19,7 +19,7 @@ class Kw(models.Model):
     id = models.IntegerField(primary_key=True)
     phrase = models.CharField(max_length=765)
     tags = TaggableManager()
-    objects = KwCntManager()
+
 
     #def num_ips(self):
         #num_ips = LogSeRank.objects.filter(phrase_id=self.id).annotate(num_books=Count('ip'))
