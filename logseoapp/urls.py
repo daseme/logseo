@@ -6,9 +6,10 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^testing/$', 'logseoapp.views.show_object'),
+
     url(r'^ranks/$', 'logseoapp.views.get_ranks'),
     (r'^phrase/(\d{1,6})/$', 'logseoapp.views.get_phrase'),
+    url(r'^landing_pages/$', 'logseoapp.views.get_landing_pages'),
     (r'^search/', include('haystack.urls')),
     # Examples:
     # url(r'^$', 'logseo.views.home', name='home'),

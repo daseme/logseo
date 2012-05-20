@@ -20,6 +20,10 @@ class Kw(models.Model):
     phrase = models.CharField(max_length=765)
     tags = TaggableManager()
 
+    def get_tag_names(self): #TESTING THIS
+        return [tag.name for tag in Tag.objects.get_for_object(self)]
+
+
 
     #def num_ips(self):
         #num_ips = LogSeRank.objects.filter(phrase_id=self.id).annotate(num_books=Count('ip'))

@@ -1,32 +1,48 @@
 {% include "header.py" %}
+<script language="javascript" type="text/javascript">
+$(document).ready(function() {
+    var oTable = $('#example').dataTable( {
+        "bPaginate": true,
+		"sPaginationType": "full_numbers",
+        "aaSorting": [[ 3, "desc" ]]
+        });
+} );
 
- <table>
-		 <tr>
-		<form name='greForm'>
-<td>Date Range:</td><td><select id="date1">
-<?php
-$date_display = "<option value=''>Any Date</option>";
-while($row3 = mysql_fetch_array($qry_result3)){
-	$date_display .= "<option value='$row3[refdate]'>$row3[refdate]</option>";
-}
+</script>
+</head>
+<body id="dt_example">
+	<div id="header">
 
-echo $date_display;
-?>
+<ul id="list-nav">
+<li><a href="/">Home</a></li>
+<li><a href="ranks.html">Ranks</a></li>
+<li><a href="query_table.html">Queries</a></li>
+<li><a href="#">Products</a></li>
+<li><a href="#">Contact</a></li>
+</ul>
+</div>
+
+			<div id="container">
+
+<form method="GET">
+<select name="start_date">
+{% for date in dates %}
+    <option value="{{ date.refdate }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
+{% endfor %}
+
 </select>
- TO
-<select id="date2">
-<?php
-echo $date_display;
-mysql_close();
-?>
-</select></td>
-</tr><tr>
-<td>&nbsp;</td><td><input type='button' onclick='ajaxFunction()' value='Query Logseo' /></td>
-</tr>
+
+<select name="end_date">
+{% for date in dates %}
+    <option value="{{ date.refdate }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
+{% endfor %}
+</select>
+<input type="submit" name="submit" class="submit" value="filter dates" />
 </form>
-	 </table>
+
+
       <table id="example"  border="0" cellpadding="0" cellspacing="0" class="pretty">
-				<thead>
+		<thead>
 		<tr>
 			<th width="4%" rowspan="2"></th>
 			<th rowspan="2" width="280px">Phrase</th>
@@ -40,22 +56,37 @@ mysql_close();
 			<th>avgrank</th>
 			<th>stdev</th>
 			<th>chart2gohere</th>
-    </tr>
+      </tr>
       </thead>
-			<tbody>
-		<tr>
-    {% for object in objects %}
-             <td></td>
-			<td>{{ object.phrase }}</td>
-            {% for tag in object.tags.all %}
-            <td>{{ tag.name }}</td>
+	    <tbody>
 
-           <td></td><td></td><td></td><td></td><td></td><td></td>
+
+
+
+ {% block content %}
+     {% for dict in ip_cnts %}
+
+		<tr>
+
+
+             <td>placeholder</td>
+
+
+           <td style="text-align:left;"><a href="/phrase/{{dict.phrase_id}}/" style="text-decoration:none;">{{dict.phrase_id__phrase}}</a></td>
+           <td>G</td><td>{{dict.num_ips}}</td>
+           <td>{{dict.num_rank}}</td>
+           <td>{{ dict.ratio }}</td>
+           <td>{{dict.avg_rank|floatformat:2}}</td>
+           <td>{{dict.st_rank|floatformat:2}}</td>
+           <td>{{dict.phrase_id__tags__name}}</td>
 		</tr>
-         {% endfor %}
-     {% endfor %}
+    {% endfor %}
+
+
+{% endblock %}
+
         </tbody>
 			</table>
-
+</body>
 {% include "footer.py" %}
 
