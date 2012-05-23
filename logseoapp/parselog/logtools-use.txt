@@ -1,0 +1,2 @@
+ cat access* | logparse --parser AccessLog --format '%h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i"' -f8 | urlparse --part query -q 'q' 
+
