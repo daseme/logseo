@@ -1,5 +1,14 @@
 {% include "header.py" %}
+<script language="javascript" type="text/javascript">
+$(document).ready(function() {
+    var oTable = $('#example').dataTable( {
+        "bPaginate": true,
+		"sPaginationType": "full_numbers",
+        "aaSorting": [[ 2, "desc" ]]
+        });
+} );
 
+</script>
     </head>
 <body id="dt_example">
 	<div id="header">
@@ -30,32 +39,41 @@
 
 <div>
 <h1>Kws that sent folks to this page</h1>
-{{ kws }}
+
 {% regroup kws by phrase_id__phrase as rank_list %}
 
-<table class="pretty">
+<table id="example" class="pretty">
 		<thead>
 		<tr>
 			<th>phrase</th>
             <th>ipcount</th>
-			<th>rankings</th>
+			<th>gcount</th>
+            <th>bing</th>
+            <th>yahoo</th>
       </tr>
       </thead>
 	    <tbody>
+
 {% for phrase_id__phrase in rank_list %}
 <tr>
-    <td>
+     <td style="text-align:left;">
     {{ phrase_id__phrase.grouper }}
     </td>
-    <td></td>
-    <td>
-        <span class="inlinesparkline" style="width:40px;">
-        {% for item in phrase_id__phrase.list %}
-        -{{ item.position }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-        </span>{{item.num_google}}
-    </td>
 
+    {% for item in phrase_id__phrase.list %}
+    <td>
+     {{ item.num_ip }}
+    </td>
+    <td>
+     {{item.num_google}}
+    </td>
+        <td>
+     {{item.num_bing}}
+    </td>
+        <td>
+     {{item.num_yahoo}}
+    </td>
+        {% endfor %}
     </tr>
 {% endfor %}
 </tbody>

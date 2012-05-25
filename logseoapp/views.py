@@ -122,18 +122,24 @@ def get_page(request, page):
                                     filter(page_id = page, position__gt = 0). \
                                     order_by('refdate')
 
-    kws       = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase', 'position', 'refdate'). \
-                                    filter(   page_id = page, position__gt = 0). \
+    kws       = LogSeRank.objects.values('phrase_id','phrase_id__phrase'). \
+                                    filter(   page_id = page). \
                                     distinct(). \
-                                    order_by('phrase_id__phrase','refdate')
+                                    order_by('phrase_id__phrase')
 
     ip_cnt    = kws.annotate(num_ip=Count('ip', distinct = True))
 
     gcount    = kws.filter(engine_id__engine__contains = 'Google'). \
                                       annotate(num_google=Count('engine_id'))
 
+    bing_cnt  = kws.filter(engine_id__engine__contains = 'Bing'). \
+                                      annotate(num_bing=Count('engine_id'))
+
+    yahoo_cnt = kws.filter(engine_id__engine__contains = 'Yahoo'). \
+                                      annotate(num_yahoo=Count('engine_id'))
+
     d = defaultdict(dict)
-    for item in (kws,ip_cnt,gcount):
+    for item in (kws,ip_cnt,gcount,bing_cnt,yahoo_cnt):
         for elem in item:
             d[elem['phrase_id']].update(elem)
     combo = d.values()
@@ -152,6 +158,6 @@ def get_page(request, page):
     sql = connection.queries
 
 
-    return render_to_response('page.py', { 'sql':sql,'page_name':page_name,'kws':kws,
+    return render_to_response('page.py', { 'sql':sql,'page_name':page_name,'kws':combo,
                                             'rankings':rankings})
 
