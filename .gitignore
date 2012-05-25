@@ -1,0 +1,6 @@
+*.pyc
+*~
+client_secrets.json
+analytics.dat
+access.*
+*.seg

@@ -74,7 +74,7 @@ $(document).ready(function() {
 
 
            <td style="text-align:left;">
-           <a href="/page/{{dict.page_id}}/" style="text-decoration:none;">{{dict.page_id__page}}</a></td>
+           <a href="/landing_pages/page/{{dict.page_id}}/" style="text-decoration:none;">{{dict.page_id__page}}</a></td>
            <td>{{ dict.num_google}} </td><td>{{dict.num_bing}}</td><td>{{dict.num_yahoo}}</td>
            <td>{{dict.num_phrase}}</td><td>{{dict.num_ip}}</td><td>{{dict.ip_per_q}}</td>
 
