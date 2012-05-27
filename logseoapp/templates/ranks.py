@@ -87,6 +87,29 @@ $(document).ready(function() {
 
         </tbody>
 			</table>
+            <div id="placeholder" style="width:600px;height:300px;"></div>
+
+            <script type="text/javascript">
+$(function () {
+
+
+    var d1 = [{% for t in times %} [{{ t.0 }},{{ t.1 }}]{% if not forloop.last %}, {% endif %} {% endfor %}];
+
+
+
+    $.plot($("#placeholder"), [ d1 ]);
+});
+</script>
+            <table>
+            {% for t in times %}
+            {{ t }}
+            <tr>
+            <td>{{ t.0 }}
+            <td>{{ t.1 }}
+            </tr>
+            {% endfor %}
+            </table>
+
 </body>
 {% include "footer.py" %}
 

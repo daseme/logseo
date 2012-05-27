@@ -3,6 +3,7 @@
 <head>
 	<link href="/static/css/complete.css" rel="stylesheet" />
 <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script src="/media/jquery.flot.min.js"></script>
 <script type="text/javascript" charset="utf-8" src="/media/jquery.sparkline.min.js"></script>
 <script type="text/javascript" charset="utf-8" src="/media/plugins/DataTables-1.9.1/media/js/jquery.dataTables.min.js"></script>
  <script type="text/javascript">

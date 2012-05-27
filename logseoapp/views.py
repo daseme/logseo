@@ -8,6 +8,8 @@ from django.db import connection
 from collections import defaultdict
 from operator import itemgetter
 from itertools import groupby
+from datetime import datetime
+import qsstats
 
 
 
@@ -21,6 +23,7 @@ def get_ranks(request, start_date="", end_date=""):
         start_date = '2011-06-01'
         end_date   = '2011-07-31'
 
+    # datatable data
     dates    = LogSeRank.objects.values('refdate').distinct()
 
     ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__tags__name'). \
@@ -38,6 +41,16 @@ def get_ranks(request, start_date="", end_date=""):
 
     phrase_ip = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
 
+    # chart / time series data
+    unique_rows = LogSeRank.objects.values('id','phrase_id','refdate'). \
+                                    filter(   position__gt = 0).distinct()
+
+    qss = qsstats.QuerySetStats(unique_rows, 'refdate')
+    start = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end   = datetime.strptime(end_date, '%Y-%m-%d').date()
+    time_series = qss.time_series(start, end)
+    # do some formatting cleanup of qsstats
+    t_series = tuple( [ (e[0].strftime('%Y%m%d'), e[1]) for e in time_series ] )
 
 
     #debug lines
@@ -48,7 +61,7 @@ def get_ranks(request, start_date="", end_date=""):
 
     return render_to_response('ranks.py', { 'sql':sql,'phrase_ip':phrase_ip,
                                                'start_date':start_date,'end_date':end_date,
-                                               'ip_cnts':ip_count, 'dates':dates})
+                                               'ip_cnts':ip_count, 'dates':dates, 'times':t_series})
 
 def get_phrase(request, phrase):
     """ View all objects """
@@ -138,6 +151,13 @@ def get_page(request, page):
     yahoo_cnt = kws.filter(engine_id__engine__contains = 'Yahoo'). \
                                       annotate(num_yahoo=Count('engine_id'))
 
+    qss = qsstats.QuerySetStats(ip_cnt, 'refdate')
+
+    today = datetime.date.today()
+    seven_days_ago = today - datetime.timedelta(days=360)
+
+    time_series = qss.time_series(seven_days_ago, today)
+
     d = defaultdict(dict)
     for item in (kws,ip_cnt,gcount,bing_cnt,yahoo_cnt):
         for elem in item:
@@ -159,5 +179,5 @@ def get_page(request, page):
 
 
     return render_to_response('page.py', { 'sql':sql,'page_name':page_name,'kws':combo,
-                                            'rankings':rankings})
+        'rankings':rankings,'times':time_series})
 
