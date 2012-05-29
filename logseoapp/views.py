@@ -9,6 +9,8 @@ from collections import defaultdict
 from operator import itemgetter
 from itertools import groupby
 from datetime import datetime
+import time
+import json
 import qsstats
 
 
@@ -49,8 +51,12 @@ def get_ranks(request, start_date="", end_date=""):
     start = datetime.strptime(start_date, '%Y-%m-%d').date()
     end   = datetime.strptime(end_date, '%Y-%m-%d').date()
     time_series = qss.time_series(start, end)
-    # do some formatting cleanup of qsstats
-    t_series = tuple( [ (e[0].strftime('%Y%m%d'), e[1]) for e in time_series ] )
+    # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time)
+    t_series = [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
+    # convert to json so we can then use 'replace' to strip quotes for the rickshaw chart app
+    # so why does rickshaw expect an invalid yet json-like structure?
+    t_series = json.dumps(t_series)
+    t_series = t_series.replace('\"','')
 
 
     #debug lines
@@ -61,7 +67,8 @@ def get_ranks(request, start_date="", end_date=""):
 
     return render_to_response('ranks.py', { 'sql':sql,'phrase_ip':phrase_ip,
                                                'start_date':start_date,'end_date':end_date,
-                                               'ip_cnts':ip_count, 'dates':dates, 'times':t_series})
+                                               'ip_cnts':ip_count, 'dates':dates,
+                                               'times':t_series})
 
 def get_phrase(request, phrase):
     """ View all objects """
