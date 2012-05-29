@@ -9,6 +9,26 @@ $(document).ready(function() {
 } );
 
 </script>
+<style>
+#chart_container {
+        position: relative;
+        font-family: Arial, Helvetica, sans-serif;
+}
+#chart {
+        position: relative;
+        left: 40px;
+}
+#y_axis {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+}
+		.rickshaw_graph .detail .x_label { display: none }
+		.rickshaw_graph .detail .item { line-height: 1.4; padding: 0.5em }
+		.detail_swatch { float: right; display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 0 }
+		.rickshaw_graph .detail .date { color: #a0a0a0 }
+</style>
 </head>
 <body id="dt_example">
 	<div id="header">
@@ -23,7 +43,14 @@ $(document).ready(function() {
 </div>
 
 			<div id="container">
+<br><br>
 
+			<div id="container">
+<div id="chart_container">
+        <div id="y_axis"></div>
+        <div id="chart"></div>
+</div>
+<br><br>
 <form method="GET">
 <select name="start_date">
 {% for date in dates %}
@@ -86,6 +113,38 @@ $(document).ready(function() {
 
         </tbody>
 			</table>
+<script>
+
+var graph = new Rickshaw.Graph( {
+        element: document.querySelector("#chart"),
+        width: 540,
+        height: 240,
+        series: [{
+            data: {{t_series|safe}},
+            color: '#E9967A'
+            }]
+} );
+
+var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
+
+var y_axis = new Rickshaw.Graph.Axis.Y( {
+        graph: graph,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        element: document.getElementById('y_axis'),
+} );
+
+graph.render();
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+	graph: graph,
+	formatter: function(series, x, y) {
+		var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
+		var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+		var content = swatch + "distinct landing pages" + ": " + parseInt(y) + '<br>' + date;
+		return content;
+	}
+} );
+</script>
 
 </body>
 {% include "footer.py" %}

@@ -10,8 +10,18 @@ from operator import itemgetter
 from itertools import groupby
 from datetime import datetime
 import time
-import json
 import qsstats
+
+
+def process_time_series(query, start_date, end_date):
+    """ process qsstats object into json """
+
+    qss = qsstats.QuerySetStats(query, 'refdate')
+    start = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end   = datetime.strptime(end_date, '%Y-%m-%d').date()
+    time_series = qss.time_series(start, end)
+    # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
+    return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
 
 
 
@@ -25,7 +35,9 @@ def get_ranks(request, start_date="", end_date=""):
         start_date = '2011-06-01'
         end_date   = '2011-07-31'
 
-    # datatable data
+    """
+    datatable data
+    """
     dates    = LogSeRank.objects.values('refdate').distinct()
 
     ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__tags__name'). \
@@ -43,32 +55,25 @@ def get_ranks(request, start_date="", end_date=""):
 
     phrase_ip = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
 
-    # chart / time series data
-    unique_rows = LogSeRank.objects.values('id','phrase_id','refdate'). \
+    """
+    chart / time series data
+    """
+    all_phrase = LogSeRank.objects.values('id','phrase_id','refdate'). \
+                                    distinct()
+
+    rank_phrase = LogSeRank.objects.values('id','phrase_id','refdate'). \
                                     filter(   position__gt = 0).distinct()
 
-    qss = qsstats.QuerySetStats(unique_rows, 'refdate')
-    start = datetime.strptime(start_date, '%Y-%m-%d').date()
-    end   = datetime.strptime(end_date, '%Y-%m-%d').date()
-    time_series = qss.time_series(start, end)
-    # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time)
-    t_series = [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
-    # convert to json so we can then use 'replace' to strip quotes for the rickshaw chart app
-    # so why does rickshaw expect an invalid yet json-like structure?
-    t_series = json.dumps(t_series)
-    t_series = t_series.replace('\"','')
-
+    all_phrase = process_time_series(all_phrase,start_date,end_date)
+    rank_phrase = process_time_series(rank_phrase,start_date,end_date)
 
     #debug lines
     sql       = connection.queries
-    #phrases = Kws.objects.filter(Q(phrase__startswith = 'nsac',tags__name__in=["branded"])).values()
-    #pc = LogSeRank.objects.filter(engine_id__engine__contains='Google').select_related()  # -> WORKS
-
 
     return render_to_response('ranks.py', { 'sql':sql,'phrase_ip':phrase_ip,
                                                'start_date':start_date,'end_date':end_date,
                                                'ip_cnts':ip_count, 'dates':dates,
-                                               'times':t_series})
+                                               'rank_phrase':rank_phrase,'all_phrase':all_phrase})
 
 def get_phrase(request, phrase):
     """ View all objects """
@@ -100,8 +105,9 @@ def get_landing_pages(request, start_date="", end_date=""):
 
     dates         = LogSeRank.objects.values('refdate').distinct()
 
-    landing_pages = LogSeRank.objects.values('page_id', 'page_id__page'). \
-                                      filter(refdate__range=(start_date, end_date))
+    landing_pages = LogSeRank.objects.values('page_id', 'page_id__page','refdate'). \
+                                      filter(refdate__range=(start_date, end_date)). \
+                                      distinct()
 
     gcount        = landing_pages.filter(engine_id__engine__contains = 'Google'). \
                                       annotate(num_google=Count('engine_id'))
@@ -128,12 +134,17 @@ def get_landing_pages(request, start_date="", end_date=""):
         num_ratio = d['num_ip'] / d['num_phrase']
         d['ip_per_q'] = round(num_ratio, 2)
 
+    """
+    chart / time series data
+    """
+
+    t_series = process_time_series(landing_pages,start_date,end_date)
 
     #debug lines
     sql = connection.queries
 
     return render_to_response('landing_pages.py', { 'sql':sql,'start_date':start_date,'end_date':end_date,
-                                                    'dates':dates, 'combo':combo})
+                                                    'dates':dates, 'combo':combo,'t_series':t_series})
 
 def get_page(request, page):
     page_name = Page.objects.values('id','page').filter(pk = page)
@@ -158,12 +169,7 @@ def get_page(request, page):
     yahoo_cnt = kws.filter(engine_id__engine__contains = 'Yahoo'). \
                                       annotate(num_yahoo=Count('engine_id'))
 
-    qss = qsstats.QuerySetStats(ip_cnt, 'refdate')
 
-    today = datetime.date.today()
-    seven_days_ago = today - datetime.timedelta(days=360)
-
-    time_series = qss.time_series(seven_days_ago, today)
 
     d = defaultdict(dict)
     for item in (kws,ip_cnt,gcount,bing_cnt,yahoo_cnt):
@@ -181,10 +187,15 @@ def get_page(request, page):
         for person in people:
             print person
     """
+    """
+    chart / time series data
+    """
+
+    #time_series = process_time_series(ip_cnt,start_date,end_date)
     #debug lines
     sql = connection.queries
 
 
     return render_to_response('page.py', { 'sql':sql,'page_name':page_name,'kws':combo,
-        'rankings':rankings,'times':time_series})
+        'rankings':rankings})
 

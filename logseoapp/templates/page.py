@@ -36,7 +36,7 @@ $(document).ready(function() {
 {% endfor %}
 </span>
 </div>
-{{ times }}
+
 <div>
 <h1>Kws that sent folks to this page</h1>
 

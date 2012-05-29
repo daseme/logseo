@@ -42,13 +42,14 @@ $(document).ready(function() {
 <li><a href="#">Contact</a></li>
 </ul>
 </div>
+<br><br>
 
 			<div id="container">
 <div id="chart_container">
         <div id="y_axis"></div>
         <div id="chart"></div>
 </div>
-
+<br><br>
 <form method="GET">
 <select name="start_date">
 {% for date in dates %}
@@ -113,22 +114,25 @@ $(document).ready(function() {
         </tbody>
 			</table>
 
-{{ times }}
-
 
 <script>
-
-
-
 
 var graph = new Rickshaw.Graph( {
         element: document.querySelector("#chart"),
         width: 540,
         height: 240,
         series: [{
-            data: {{times}},
-            color: 'steelblue'
-            }]
+                name: 'rank phrase',
+                data: {{rank_phrase|safe}},
+                color: '#E9967A'
+            },
+            {
+                name:'all phrase',
+                data: {{all_phrase|safe}},
+                color: 'steelblue'
+            }
+
+            ]
 } );
 
 var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
@@ -146,7 +150,7 @@ var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 	formatter: function(series, x, y) {
 		var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
 		var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
-		var content = swatch + "phrase count" + ": " + parseInt(y) + '<br>' + date;
+		var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
 		return content;
 	}
 } );
