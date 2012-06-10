@@ -13,6 +13,11 @@ import time
 import qsstats
 
 
+def get_home(request):
+    """ retrieve stats for home page """
+
+    pass
+
 def process_time_series(query, start_date, end_date):
     """ process qsstats object into json """
 
@@ -169,27 +174,11 @@ def get_page(request, page):
     yahoo_cnt = kws.filter(engine_id__engine__contains = 'Yahoo'). \
                                       annotate(num_yahoo=Count('engine_id'))
 
-
-
     d = defaultdict(dict)
     for item in (kws,ip_cnt,gcount,bing_cnt,yahoo_cnt):
         for elem in item:
             d[elem['phrase_id']].update(elem)
     combo = d.values()
-
-
-    """
-    key = itemgetter('gender')
-    iter = groupby(sorted(people, key=key), key=key)
-
-    for gender, people in iter:
-        print '===', gender, '==='
-        for person in people:
-            print person
-    """
-    """
-    chart / time series data
-    """
 
     #time_series = process_time_series(ip_cnt,start_date,end_date)
     #debug lines

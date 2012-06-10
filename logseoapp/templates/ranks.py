@@ -2,6 +2,7 @@
 <script language="javascript" type="text/javascript">
 $(document).ready(function() {
     var oTable = $('#example').dataTable( {
+
         "bPaginate": true,
 		"sPaginationType": "full_numbers",
         "aaSorting": [[ 3, "desc" ]]

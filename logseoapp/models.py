@@ -16,9 +16,11 @@ class KwCntManager(models.Manager):
         return self.filter(phrase__icontains=keyword).count()
 
 class Kw(models.Model):
-    id = models.IntegerField(primary_key=True)
-    phrase = models.CharField(max_length=765)
-    tags = TaggableManager()
+    id         = models.IntegerField(primary_key=True)
+    phrase     = models.CharField(max_length=765)
+    first_seen = models.DateField(null=True)
+    last_seen  = models.DateField(null=True)
+    tags       = TaggableManager()
 
     def get_tag_names(self): #TESTING THIS
         return [tag.name for tag in Tag.objects.get_for_object(self)]
@@ -36,8 +38,8 @@ class Kw(models.Model):
         return self.phrase
 
 class Engine(models.Model):
-    id = models.IntegerField(primary_key=True)
-    engine = models.CharField(max_length=765)
+    id       = models.IntegerField(primary_key=True)
+    engine   = models.CharField(max_length=765)
     class Meta:
         db_table = u'engines'
 

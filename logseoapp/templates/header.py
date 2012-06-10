@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+    <link href="/static/css/bootstrap/css/bootstrap.css" rel="stylesheet" />
 	<link href="/static/css/complete.css" rel="stylesheet" />
     <link href="/static/css/rickshaw.css" rel="stylesheet" />
     <script src="http://d3js.org/d3.v2.js"></script>
