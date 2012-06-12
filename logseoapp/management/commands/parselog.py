@@ -30,6 +30,8 @@ import urlparse
 import re
 import apachelog
 import sys
+import socket
+import struct
 import searchengines
 
 #filename = 'access.20110501'
@@ -40,15 +42,84 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.dicts = ""
-        for filename in glob.glob('/home/kurt/websites/logseo/logseoapp/management/commands/access.*'):
+        self.my_objects = ""
+
+        for filename in glob.glob('/home/kurt/websites/logseo/logseoapp/management/commands/access.20110802'):
             self.dicts = parse_log(filename)
 
         for d in self.dicts:
 
-            print d
-            print "\n"
+            log_phrase = d['phrase'].strip()
+            refdate    = d['refdate']
+
+            phrase_id      = check_phrase(log_phrase,refdate)
+            engine_id      = check_engine(d['engine'])
+            page_id        = check_page(d['page'])
+            d['phrase_id'] = Kw.objects.get(pk=phrase_id)
+            d['engine_id'] = Engine.objects.get(pk=engine_id)
+            d['page_id']   = Page.objects.get(pk=page_id)
+            del d['engine'],d['page'],d['phrase']
+
+        #self.my_objects = [LogSeRank(ip=x['ip'],position=x['position'],phrase_id=x['phrase_id'],page_id=x['page_id'],engine_id=x['engine_id'],http=x['http'],refdate=x['refdate'],reftime=x['reftime']) for x in self.dicts]
+        self.my_objects = [LogSeRank(**vals) for vals in self.dicts]
+
+        LogSeRank.objects.bulk_create(self.my_objects)
 
 
+
+
+"""
+ db functions
+"""
+
+def check_phrase(log_phrase,refdate):
+
+    get_phrase = Kw.objects.values('id','phrase').filter(phrase = log_phrase)
+
+    if get_phrase.exists():
+        Kw.objects.filter(phrase = log_phrase).update(last_seen = refdate)
+        return get_phrase[0]['id']
+
+    else:
+        p = Kw(phrase = log_phrase, first_seen = refdate, last_seen = refdate)
+        p.save()
+        return p.id
+
+
+        # phrase exists so update last_seen, check if engine exists, check if page exists, then insert new row in log_se_rank
+
+
+def check_engine(engine):
+
+    get_engine = Engine.objects.values('id','engine').filter(engine = engine)
+
+    if get_engine.exists():
+        return get_engine[0]['id']
+
+    else:
+        p = Engine(engine = engine)
+        p.save()
+        return p.id
+
+
+def check_page(page):
+
+    get_page = Page.objects.values('id','page').filter(page = page)
+
+    if get_page.exists():
+        # phrase exists so update last_seen, check if engine exists, check if page exists, then insert new row in log_se_rank
+        return get_page[0]['id']
+
+    else:
+        p = Page(page = page)
+        p.save()
+        return p.id
+
+
+
+"""
+ parsing functions
+"""
 def parse_log(filename):
     """ parse log file for database """
     # log format = r'%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"'
@@ -71,11 +142,14 @@ def update_list(log_list):
     for d in log_list:
 
         del d['%l'],d['%u'],d['%>s'],d['%b'],d['%{User-agent}i']
+        # convert ip to 32bit packed integer for storing
+        #struct.unpack('L',socket.inet_aton(ip))[0]
         d['ip']   = d.pop('%h')
+        d['ip']   = int(struct.unpack('>L',socket.inet_aton(d['ip']))[0])
         d['http'] = d.pop('%{Referer}i')
 
         try:
-            d['engine'],d['phrase'],d['rank'] = get_name_query_rank(d)
+            d['engine'],d['phrase'],d['position'] = get_name_query_rank(d)
         except:
             pass
 
@@ -115,11 +189,11 @@ def get_name_query_rank(log_dict):
         phrase =q_list[q]
 
     if 'cd' in q_list:
-        rank = q_list['cd']
+        position = int(q_list['cd'])
     else:
-        rank = 0
+        position = 0
 
-    return engine,phrase,rank
+    return engine,phrase,position
 
 def get_date_format(log_dict):
     """ parse apache logline (%t) """

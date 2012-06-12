@@ -16,7 +16,7 @@ class KwCntManager(models.Manager):
         return self.filter(phrase__icontains=keyword).count()
 
 class Kw(models.Model):
-    id         = models.IntegerField(primary_key=True)
+
     phrase     = models.CharField(max_length=765)
     first_seen = models.DateField(null=True)
     last_seen  = models.DateField(null=True)
@@ -38,7 +38,7 @@ class Kw(models.Model):
         return self.phrase
 
 class Engine(models.Model):
-    id       = models.IntegerField(primary_key=True)
+
     engine   = models.CharField(max_length=765)
     class Meta:
         db_table = u'engines'
@@ -47,7 +47,7 @@ class Engine(models.Model):
         return self.engine
 
 class Page(models.Model):
-    id = models.IntegerField(primary_key=True)
+
     page = models.CharField(max_length=765)
     class Meta:
         db_table = u'pages'
@@ -64,7 +64,7 @@ class LogSeRankAdmin(UserAdmin):
     list_filter = ('kw__phrase',)
 """
 class LogSeRank(models.Model):
-    id = models.IntegerField(primary_key=True)
+
     ip = models.IntegerField()
     position = models.IntegerField()
     phrase_id = models.ForeignKey('Kw',db_column='phrase_id')
