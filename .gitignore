@@ -6,3 +6,4 @@ access.*
 *.seg
 *.swp
 *.swo
+*.log

@@ -13,10 +13,18 @@ import time
 import qsstats
 
 
-def get_home(request):
-    """ retrieve stats for home page """
+def date_select(get_request):
+    """ handle date select forms, return date params """
 
-    pass
+    if 'start_date' and 'end_date' in get_request:
+        start_date = get_request['start_date']
+        end_date   = get_request['end_date']
+        return start_date,end_date
+    else:
+        start_date = '2011-06-01'
+        end_date   = '2011-07-31'
+        return start_date,end_date
+
 
 def process_time_series(query, start_date, end_date):
     """ process qsstats object into json """
@@ -24,21 +32,20 @@ def process_time_series(query, start_date, end_date):
     qss = qsstats.QuerySetStats(query, 'refdate')
     start = datetime.strptime(start_date, '%Y-%m-%d').date()
     end   = datetime.strptime(end_date, '%Y-%m-%d').date()
-    time_series = qss.time_series(start, end)
+    time_series = qss.time_series(start, end, 'weeks') # aggregate by weeks (default is days)
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
 
+def get_home(request):
+    """ retrieve stats for home page """
+
+    pass
 
 
 def get_ranks(request, start_date="", end_date=""):
     """ get rank data for kws, defaults to entire data-set """
 
-    if 'start_date' and 'end_date' in request.GET:
-        start_date = request.GET['start_date']
-        end_date   = request.GET['end_date']
-    else:
-        start_date = '2011-06-01'
-        end_date   = '2011-07-31'
+    start_date,end_date = date_select(request.GET)
 
     """
     datatable data
@@ -63,8 +70,7 @@ def get_ranks(request, start_date="", end_date=""):
     """
     chart / time series data
     """
-    all_phrase = LogSeRank.objects.values('id','phrase_id','refdate'). \
-                                    distinct()
+    all_phrase = LogSeRank.objects.values('id','phrase_id','refdate').distinct()
 
     rank_phrase = LogSeRank.objects.values('id','phrase_id','refdate'). \
                                     filter(   position__gt = 0).distinct()
@@ -98,19 +104,15 @@ def get_phrase(request, phrase):
     return render_to_response('phrase.py', { 'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
 
 
+
 def get_landing_pages(request, start_date="", end_date=""):
     """ get landing pages data """
 
-    if 'start_date' and 'end_date' in request.GET:
-        start_date = request.GET['start_date']
-        end_date   = request.GET['end_date']
-    else:
-        start_date = '2011-06-01'
-        end_date   = '2011-07-31'
+    start_date,end_date = date_select(request.GET)
 
     dates         = LogSeRank.objects.values('refdate').distinct()
 
-    landing_pages = LogSeRank.objects.values('page_id', 'page_id__page','refdate'). \
+    landing_pages = LogSeRank.objects.values('page_id', 'page_id__page'). \
                                       filter(refdate__range=(start_date, end_date)). \
                                       distinct()
 
