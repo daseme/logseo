@@ -1,28 +1,31 @@
 from __future__ import division
-from django.views.generic import simple
-from django.shortcuts import render_to_response
+#from django.views.generic import simple
+from django.shortcuts import render
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 from logseoapp.models import LogSeRank, Engine, Kw, Page
-from django.http import HttpResponse
+#from django.http import HttpResponse
 from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
-from operator import itemgetter
-from itertools import groupby
+#from operator import itemgetter
+#from itertools import groupby
 from datetime import datetime
+from datetime import date, timedelta
 import time
 import qsstats
 
 
 def date_select(get_request):
-    """ handle date select forms, return date params """
+    """ defaults to last month in our db, or uses date select forms """
 
     if 'start_date' and 'end_date' in get_request:
         start_date = get_request['start_date']
         end_date   = get_request['end_date']
         return start_date,end_date
     else:
-        start_date = '2011-06-01'
-        end_date   = '2011-07-31'
+        end_date = LogSeRank.objects.values('refdate').order_by('-refdate')[1]
+        end_date = end_date['refdate'] # possible we don't have a full month here
+        start_date = end_date[:8]+'01' # replace day part of end_date with 01
         return start_date,end_date
 
 
@@ -36,14 +39,34 @@ def process_time_series(query, start_date, end_date):
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
 
-def get_home(request):
+def home(request):
     """ retrieve stats for home page """
 
-    pass
+    phrases_new = Kw.objects.values('id','phrase','first_seen').order_by('-first_seen')[:5]
+    # get last 7 days of dates, get the 7 days of dates bf that, get kws in each set, compare sets
+    last_week_end = LogSeRank.objects.values('refdate').order_by('-refdate')[1]
+    #delta = datetime.timedelta(days=7)
+    #new_date = last_week_end - delta
+
+    last_week  = LogSeRank.objects.values('refdate','phrase_id','phrase_id__phrase').order_by('-refdate').distinct()[:7]
+    wk_bf_last = LogSeRank.objects.values('refdate','phrase_id','phrase_id__phrase').order_by('-refdate').distinct()[7:14]
+    # keep all in wk_bf_last if not in last_week
+    unique = [{'phrase':x['phrase_id__phrase'],'phrase_id':x['phrase_id']} for x in wk_bf_last if x not in last_week]
+    #missing_kws = Kw.objects.values('id','phrase','first_seen').order_by('-last_seen')[:5]
+    #kws we haven't seen in one week that we saw in the week prior
+
+
+
+    #debug lines
+    sql       = connection.queries
+
+
+    return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,
+        'last_week':last_week,'wk_bf_last':wk_bf_last, })
 
 
 def get_ranks(request, start_date="", end_date=""):
-    """ get rank data for kws, defaults to entire data-set """
+    """ get rank data for kws, default dates set in date_select() fx """
 
     start_date,end_date = date_select(request.GET)
 
@@ -70,21 +93,23 @@ def get_ranks(request, start_date="", end_date=""):
     """
     chart / time series data
     """
-    all_phrase = LogSeRank.objects.values('id','phrase_id','refdate').distinct()
+    all_phrase  = LogSeRank.objects.values('id','phrase_id','refdate').distinct()
 
     rank_phrase = LogSeRank.objects.values('id','phrase_id','refdate'). \
                                     filter(   position__gt = 0).distinct()
+    all_engine  = LogSeRank.objects.values('id','engine_id','refdate').distinct()
 
-    all_phrase = process_time_series(all_phrase,start_date,end_date)
+    all_phrase  = process_time_series(all_phrase,start_date,end_date)
     rank_phrase = process_time_series(rank_phrase,start_date,end_date)
+    all_engine  = process_time_series(all_engine,start_date,end_date)
 
     #debug lines
     sql       = connection.queries
 
-    return render_to_response('ranks.py', { 'sql':sql,'phrase_ip':phrase_ip,
+    return render(request,'ranks.py', { 'sql':sql,'phrase_ip':phrase_ip,
                                                'start_date':start_date,'end_date':end_date,
                                                'ip_cnts':ip_count, 'dates':dates,
-                                               'rank_phrase':rank_phrase,'all_phrase':all_phrase})
+                                               'rank_phrase':rank_phrase,'all_phrase':all_phrase,'all_engine':all_engine})
 
 def get_phrase(request, phrase):
     """ View all objects """
@@ -98,10 +123,10 @@ def get_phrase(request, phrase):
                                     order_by('page_id__page','refdate')
 
     #debug lines
-    sql = connection.queries
+    #sql = connection.queries
 
 
-    return render_to_response('phrase.py', { 'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
+    return render(request,'phrase.py', { 'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
 
 
 
@@ -150,7 +175,7 @@ def get_landing_pages(request, start_date="", end_date=""):
     #debug lines
     sql = connection.queries
 
-    return render_to_response('landing_pages.py', { 'sql':sql,'start_date':start_date,'end_date':end_date,
+    return render(request,'landing_pages.py', { 'sql':sql,'start_date':start_date,'end_date':end_date,
                                                     'dates':dates, 'combo':combo,'t_series':t_series})
 
 def get_page(request, page):
@@ -187,6 +212,6 @@ def get_page(request, page):
     sql = connection.queries
 
 
-    return render_to_response('page.py', { 'sql':sql,'page_name':page_name,'kws':combo,
+    return render(request, 'page.py', { 'sql':sql,'page_name':page_name,'kws':combo,
         'rankings':rankings})
 

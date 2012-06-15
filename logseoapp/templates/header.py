@@ -7,10 +7,11 @@
     <script src="http://d3js.org/d3.v2.js"></script>
 <script type="text/javascript" charset="utf-8" src="/media/d3.layout.js"></script>
 <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
-
 <script type="text/javascript" charset="utf-8" src="/media/rickshaw.min.js"></script>
+
 <script type="text/javascript" charset="utf-8" src="/media/jquery.sparkline.min.js"></script>
 <script type="text/javascript" charset="utf-8" src="/media/plugins/DataTables-1.9.1/media/js/jquery.dataTables.min.js"></script>
+
  <script type="text/javascript">
     $(function() {
         /** This code runs when everything has been loaded on the page */
@@ -31,4 +32,16 @@
     });
     </script>
 
+<style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .nav ,nav-header {
+              #background-color:#9BB0C3;
+              }
+    </style>
 

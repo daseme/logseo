@@ -2,19 +2,21 @@
 
     </head>
 <body id="dt_example">
-	<div id="header">
+{% include "navigation.html" %}
+{% include "subpage-sidenav.html" %}
 
-<ul id="list-nav">
-<li><a href="/">Home</a></li>
-<li><a href="ranks.html">Ranks</a></li>
-<li><a href="query_table.html">Queries</a></li>
-<li><a href="#">Products</a></li>
-<li><a href="#">Contact</a></li>
-</ul>
-</div>
+    <div class="span10">
+        <div id="chart_container">
+            <div id="y_axis"></div>
+            <div id="chart"></div>
+        </div>
+    </div>
 
 
-<div id="container">
+<div class="span10">
+
+<br><br>
+{% include "date_form.html" %}
 {% block content %}
 {% for dict in phrase_name %}
 <h1>{{ dict.phrase }}</h1>

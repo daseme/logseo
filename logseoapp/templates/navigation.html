@@ -1,0 +1,35 @@
+<div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/">LOGseO</a>
+          <div class="btn-group pull-right">
+            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+              <i class="icon-user"></i> Username
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a href="#">Profile</a></li>
+              <li class="divider"></li>
+              <li><a href="#">Sign Out</a></li>
+            </ul>
+          </div>
+          <div class="nav-collapse">
+              <ul class="nav">
+                  {% block content %}
+              <li {% if request.path == '/' %} class="active"{% endif %}><a href="/">Home</a></li>
+              <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/ranks/">Ranks</a></li>
+              <li {% if request.path == '/landing_pages/' %} class="active"{% endif %}><a href="/landing_pages/">Landing Pages</a></li>
+
+              {% endblock%}
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+

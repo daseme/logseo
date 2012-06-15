@@ -10,20 +10,19 @@ $(document).ready(function() {
 } );
 
 </script>
+
 <style>
+#Rickshaw
 #chart_container {
         position: relative;
         font-family: Arial, Helvetica, sans-serif;
 }
 #chart {
-        position: relative;
-        left: 40px;
+        float:left;
 }
 #y_axis {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 40px;
+	float: left;
+	width: 40px;
 }
 		.rickshaw_graph .detail .x_label { display: none }
 		.rickshaw_graph .detail .item { line-height: 1.4; padding: 0.5em }
@@ -33,42 +32,42 @@ $(document).ready(function() {
 
 </head>
 <body id="dt_example">
-	<div id="header">
+{% include "navigation.html" %}
+{% include "subpage-sidenav.html" %}
 
-<ul id="list-nav">
-<li><a href="/">Home</a></li>
-<li><a href="ranks.html">Ranks</a></li>
-<li><a href="query_table.html">Queries</a></li>
-<li><a href="#">Products</a></li>
-<li><a href="#">Contact</a></li>
-</ul>
-</div>
+<div class="span10">
+{% include "date_form.html" %}
+    <div class="row-fluid">
+        <div class="span5">
+        <h2>Ranked/Unranked Kws per Week</h2>
+        <hr>
+            <div id="chart_container">
+                <div id="y_axis"></div>
+                <div id="chart"></div>
+            </div>
+        </div>
+        <div class="span5">
+            <h2>Search Engines per Week</h2>
+            <p>like this</p>
+        </div>
+        <div class="span5">
+            <div id="chart_container">
+                <div id="y_axis"></div>
+                <div id="chart"></div>
+            </div>
+        </div>
+
+    <div>
+
+
+
+<div class="row-fluid">
+<div class="span10">
 <br><br>
 
-			<div id="container">
-<div id="chart_container">
-        <div id="y_axis"></div>
-        <div id="chart"></div>
-</div>
-<br><br>
-<form method="GET">
-<select name="start_date">
-{% for date in dates %}
-    <option value="{{ date.refdate }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
-{% endfor %}
-
-</select>
-
-<select name="end_date">
-{% for date in dates %}
-    <option value="{{ date.refdate }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
-{% endfor %}
-</select>
-<input type="submit" name="submit" class="submit" value="filter dates" />
-</form>
 
 
-      <table id="example"  border="0" cellpadding="0" cellspacing="0" class="pretty">
+       <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
 		<thead>
 		<tr>
 			<th width="4%" rowspan="2"></th>
@@ -116,11 +115,12 @@ $(document).ready(function() {
 			</table>
 
 
+
 <script>
 
 var graph = new Rickshaw.Graph( {
         element: document.querySelector("#chart"),
-        width: 540,
+        width: 440,
         height: 240,
         series: [{
                 name: 'rank phrase',
@@ -156,7 +156,6 @@ var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 	}
 } );
 </script>
-
 
 </body>
 {% include "footer.py" %}

@@ -13,7 +13,7 @@ urlpatterns = patterns('',
     url(r'^landing_pages/page/(\d{1,6})/$', 'logseoapp.views.get_page'),
     (r'^search/', include('haystack.urls')),
     # Examples:
-    # url(r'^$', 'logseo.views.home', name='home'),
+    url(r'^$', 'logseoapp.views.home', name='home'),
     # url(r'^logseo/', include('logseo.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
