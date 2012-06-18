@@ -7,3 +7,4 @@ access.*
 *.swp
 *.swo
 *.log
+fixtures/*.json

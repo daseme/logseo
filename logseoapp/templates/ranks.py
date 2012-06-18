@@ -130,7 +130,7 @@ var graph = new Rickshaw.Graph( {
             {
                 name:'all phrase',
                 data: {{all_phrase|safe}},
-                color: 'steelblue'
+                color: '#ADB7AB'
             }
 
             ]

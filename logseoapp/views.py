@@ -9,8 +9,7 @@ from django.db import connection
 from collections import defaultdict
 #from operator import itemgetter
 #from itertools import groupby
-from datetime import datetime
-from datetime import date, timedelta
+from datetime import date,datetime,timedelta
 import time
 import qsstats
 
@@ -23,7 +22,7 @@ def date_select(get_request):
         end_date   = get_request['end_date']
         return start_date,end_date
     else:
-        end_date = LogSeRank.objects.values('refdate').order_by('-refdate')[1]
+        end_date = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
         end_date = end_date['refdate'] # possible we don't have a full month here
         start_date = end_date[:8]+'01' # replace day part of end_date with 01
         return start_date,end_date
@@ -42,9 +41,17 @@ def process_time_series(query, start_date, end_date):
 def home(request):
     """ retrieve stats for home page """
 
+    #new phrase stuff
     phrases_new = Kw.objects.values('id','phrase','first_seen').order_by('-first_seen')[:5]
+    latest_date = Kw.objects.values('first_seen').order_by('-first_seen')[1]
+    week_ago = latest_date['first_seen'] - timedelta(days=7)
+    #week_ago - datetime.strptime(week_ago,'%Y-%m-%d')
+    p_count = Kw.objects.filter(first_seen__gt = week_ago).count()
+    #p_count = p_count[0].phrase_count
+
+    #missing Kws stuff
     # get last 7 days of dates, get the 7 days of dates bf that, get kws in each set, compare sets
-    last_week_end = LogSeRank.objects.values('refdate').order_by('-refdate')[1]
+    last_week_end = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
     #delta = datetime.timedelta(days=7)
     #new_date = last_week_end - delta
 
@@ -62,10 +69,10 @@ def home(request):
 
 
     return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,
-        'last_week':last_week,'wk_bf_last':wk_bf_last, })
+        'last_week':last_week,'wk_bf_last':wk_bf_last,'week_ago':week_ago,'p_count':p_count })
 
 
-def get_ranks(request, start_date="", end_date=""):
+def get_ranks(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
 
     start_date,end_date = date_select(request.GET)

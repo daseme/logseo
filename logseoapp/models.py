@@ -9,7 +9,7 @@
 
 from django.db import models
 from taggit.managers import TaggableManager
-from django.db.models import Q, Avg, Count, F
+from django.db.models import Avg, Count
 
 class KwCntManager(models.Manager):
     def kw_count(self, keyword):
@@ -22,8 +22,8 @@ class Kw(models.Model):
     last_seen  = models.DateField(null=True)
     tags       = TaggableManager()
 
-    def get_tag_names(self): #TESTING THIS
-        return [tag.name for tag in Tag.objects.get_for_object(self)]
+    #def get_tag_names(self): #TESTING THIS
+    #    return [tag.name for tag in Tag.objects.get_for_object(self)]
 
 
 
@@ -77,15 +77,4 @@ class LogSeRank(models.Model):
     class Meta:
         db_table = u'log_se_rank'
 
-
-
-class RanksPagesDatesEngines(models.Model):
-    phrase = models.CharField(max_length=765, blank=True)
-    sengines = models.CharField(max_length=1023, blank=True)
-    ipcount = models.BigIntegerField(null=True, blank=True)
-    rank = models.TextField(blank=True)
-    page = models.CharField(max_length=1023, blank=True)
-    refdate = models.CharField(max_length=1023, blank=True)
-    class Meta:
-        db_table = u'ranks_pages_dates_engines'
 

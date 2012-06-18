@@ -128,6 +128,7 @@ $.extend( $.fn.dataTableExt.oPagination, {
 {% include "subpage-sidenav.html" %}
 
 <div class="span10">
+{% include "date_form.html" %}
     <div class="row-fluid">
         <div class="span12">
             <div id="chart_container">
@@ -140,7 +141,7 @@ $.extend( $.fn.dataTableExt.oPagination, {
 <div class="row-fluid">
     <div class="span12">
         <br><br>
-        {% include "date_form.html" %}
+
 
 
      <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
