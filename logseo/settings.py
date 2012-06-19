@@ -143,7 +143,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'haystack',
     'qsstats', #using django-qsstats-magic
-    'logseo.logseoapp',
+    'logseoapp',
     #'logseo.logseoapp.parselog',
     'south',
     'taggit',

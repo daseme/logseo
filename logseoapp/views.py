@@ -1,15 +1,10 @@
 from __future__ import division
-#from django.views.generic import simple
 from django.shortcuts import render
-from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
-from logseoapp.models import LogSeRank, Engine, Kw, Page
-#from django.http import HttpResponse
+from logseoapp.models import LogSeRank, Kw, Page
 from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
-#from operator import itemgetter
-#from itertools import groupby
-from datetime import date,datetime,timedelta
+from datetime import datetime,timedelta
 import time
 import qsstats
 
@@ -51,7 +46,7 @@ def home(request):
 
     #missing Kws stuff
     # get last 7 days of dates, get the 7 days of dates bf that, get kws in each set, compare sets
-    last_week_end = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
+    #last_week_end = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
     #delta = datetime.timedelta(days=7)
     #new_date = last_week_end - delta
 
@@ -113,7 +108,7 @@ def get_ranks(request=None, start_date="", end_date=""):
     #debug lines
     sql       = connection.queries
 
-    return render(request,'ranks.py', { 'sql':sql,'phrase_ip':phrase_ip,
+    return render(request,'ranks.html', { 'sql':sql,'phrase_ip':phrase_ip,
                                                'start_date':start_date,'end_date':end_date,
                                                'ip_cnts':ip_count, 'dates':dates,
                                                'rank_phrase':rank_phrase,'all_phrase':all_phrase,'all_engine':all_engine})
@@ -133,7 +128,7 @@ def get_phrase(request, phrase):
     #sql = connection.queries
 
 
-    return render(request,'phrase.py', { 'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
+    return render(request,'phrase.html', { 'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
 
 
 
@@ -182,7 +177,7 @@ def get_landing_pages(request, start_date="", end_date=""):
     #debug lines
     sql = connection.queries
 
-    return render(request,'landing_pages.py', { 'sql':sql,'start_date':start_date,'end_date':end_date,
+    return render(request,'landing_pages.html', { 'sql':sql,'start_date':start_date,'end_date':end_date,
                                                     'dates':dates, 'combo':combo,'t_series':t_series})
 
 def get_page(request, page):
@@ -219,6 +214,6 @@ def get_page(request, page):
     sql = connection.queries
 
 
-    return render(request, 'page.py', { 'sql':sql,'page_name':page_name,'kws':combo,
+    return render(request, 'page.html', { 'sql':sql,'page_name':page_name,'kws':combo,
         'rankings':rankings})
 
