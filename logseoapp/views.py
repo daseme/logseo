@@ -37,12 +37,22 @@ def home(request):
     """ retrieve stats for home page """
 
     #new phrase stuff
-    phrases_new = Kw.objects.values('id','phrase','first_seen').order_by('-first_seen')[:5]
-    latest_date = Kw.objects.values('first_seen').order_by('-first_seen')[1]
-    week_ago = latest_date['first_seen'] - timedelta(days=7)
-    #week_ago - datetime.strptime(week_ago,'%Y-%m-%d')
-    p_count = Kw.objects.filter(first_seen__gt = week_ago).count()
-    #p_count = p_count[0].phrase_count
+    #naive return of 5 latest kws added to db
+    phrases_new   = Kw.objects.values('id','phrase','first_seen').order_by('-first_seen')[:5]
+    # get the most recent sunday, so we can count back to the first full week in our dataset
+    latest_date   = Kw.objects.values('first_seen').filter(first_seen__week_day=1).order_by('-first_seen')[:2]
+    now_date      = latest_date[1]['first_seen']
+    # this gets our first monday for which we have a full week
+    week_ago      = now_date - timedelta(days=6)
+    four_wks_ago  = now_date - timedelta(days=28)
+    p_count       = Kw.objects.filter(first_seen__range=[week_ago,now_date]).count()
+    # time series stuff for the bar chart
+    phrase_new_ts = Kw.objects.values('first_seen','phrase')
+    qss           = qsstats.QuerySetStats(phrase_new_ts, 'first_seen')
+    new_kws_cnt   = qss.time_series(four_wks_ago, now_date,'weeks') # aggregate by weeks (default is days)
+    # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
+    new_kws_cnt = [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in new_kws_cnt ]
+
 
     #missing Kws stuff
     # get last 7 days of dates, get the 7 days of dates bf that, get kws in each set, compare sets
@@ -63,8 +73,9 @@ def home(request):
     sql       = connection.queries
 
 
-    return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,
-        'last_week':last_week,'wk_bf_last':wk_bf_last,'week_ago':week_ago,'p_count':p_count })
+    return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,'last_week':last_week,
+                                          'wk_bf_last':wk_bf_last,'week_ago':week_ago,'latest_date':now_date,
+                                          'p_count':p_count,'new_kws_cnt':new_kws_cnt })
 
 
 def get_ranks(request=None, start_date="", end_date=""):
