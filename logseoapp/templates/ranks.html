@@ -2,10 +2,23 @@
 <script language="javascript" type="text/javascript">
 $(document).ready(function() {
     var oTable = $('#example').dataTable( {
-
+        	"fnDrawCallback": function() { //call sparkline init after row drawn
+            $('.inlinesparkline').sparkline('html', { enableTagOptions: true });
+            },
         "bPaginate": true,
 		"sPaginationType": "full_numbers",
-        "aaSorting": [[ 3, "desc" ]]
+        "aaSorting": [[ 4, "desc" ]],
+        	"aoColumns": [
+						{ "sClass": "center", "bSortable": false },
+						{ "sClass": "left" },
+					  null,
+						null,
+						null,
+						null,
+						null,
+						null,
+					{ "sClass": "inlinesparkline", "sTitle": "chart" }
+					]
         });
 } );
 
@@ -17,10 +30,10 @@ $(document).ready(function() {
         position: relative;
         font-family: Arial, Helvetica, sans-serif;
 }
-#chart {
+#chart,#avg_rank {
         float:left;
 }
-#y_axis {
+#y_axis, #y_axis2 {
 	float: left;
 	width: 40px;
 }
@@ -47,14 +60,12 @@ $(document).ready(function() {
             </div>
         </div>
         <div class="span5">
-            <h2>Search Engines per Week</h2>
-            <p>like this</p>
-        </div>
-        <div class="span5">
-            <div id="chart_container">
-                <div id="y_axis"></div>
-                <div id="chart"></div>
-            </div>
+            <h2>Avg Position per Week</h2>
+            <hr>
+                <div id="chart_container">
+                    <div id="y_axis2"></div>
+                    <div id="avg_rank"></div>
+                </div>
         </div>
 
     <div>
@@ -98,13 +109,13 @@ $(document).ready(function() {
              <td>placeholder</td>
 
 
-           <td style="text-align:left;"><a href="/phrase/{{dict.phrase_id}}/" style="text-decoration:none;">{{dict.phrase_id__phrase}}</a></td>
+           <td style="text-align:left;"><a href="/phrase/{{dict.phrase_id}}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
            <td>G</td><td>{{dict.num_ips}}</td>
-           <td>{{dict.num_rank}}</td>
+           <td>{{ dict.num_rank }}</td>
            <td>{{ dict.ratio }}</td>
-           <td>{{dict.avg_rank|floatformat:2}}</td>
-           <td>{{dict.st_rank|floatformat:2}}</td>
-           <td>{{dict.phrase_id__tags__name}}</td>
+           <td>{{ dict.avg_rank|floatformat:2 }}</td>
+           <td>{{ dict.st_rank|floatformat:2 }}</td>
+           <td>empty for now</td>
 		</tr>
     {% endfor %}
 
@@ -114,7 +125,7 @@ $(document).ready(function() {
         </tbody>
 			</table>
 
-
+      
 
 <script>
 
@@ -124,12 +135,12 @@ var graph = new Rickshaw.Graph( {
         height: 240,
         series: [{
                 name: 'rank phrase',
-                data: {{rank_phrase|safe}},
+                data: {{ rank_phrase|safe }},
                 color: '#E9967A'
             },
             {
                 name:'all phrase',
-                data: {{all_phrase|safe}},
+                data: {{ all_phrase|safe }},
                 color: '#ADB7AB'
             }
 
@@ -156,7 +167,46 @@ var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 	}
 } );
 </script>
+<script>
 
+var graph2 = new Rickshaw.Graph( {
+        element: document.querySelector("#avg_rank"),
+        width: 440,
+        height: 240,
+        renderer: 'line',
+        series: [{
+                name: 'avg rank',
+                data: {{ avg_position|safe }},
+                color: '#E9967A'
+            }
+
+
+            ]
+} );
+
+var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph2 } );
+
+var y_axis = new Rickshaw.Graph.Axis.Y( {
+        graph: graph2,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        element: document.getElementById('y_axis'),
+} );
+
+graph2.render();
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+	graph: graph2,
+	formatter: function(series, x, y) {
+		var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
+		var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+		var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+		return content;
+	}
+} );
+</script>
+rank_phrase {{ rank_phrase }} <br>
+avg_position {{ avg_position }}
+</div></div>
 </body>
-{% include "footer.py" %}
+{% include "footer.html" %}
 

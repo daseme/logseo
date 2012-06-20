@@ -18,7 +18,7 @@
                     {% endfor %}
 
 
-                    <span class="inlinesparkline">
+                    <span class="inlinesparkline" style="width:40px;">
                         {% for dict in rankings %}
                         -{{ dict.position }}{% if not forloop.last %}, {% endif %}
                         {% endfor %}
@@ -47,5 +47,5 @@
 </table>
 {% endblock %}
 </div>
-{% include "footer.py" %}
+{% include "footer.html" %}
 

@@ -7,6 +7,10 @@ from collections import defaultdict
 from datetime import datetime,timedelta
 import time
 import qsstats
+import itertools
+import operator
+
+
 
 
 def date_select(get_request):
@@ -23,10 +27,12 @@ def date_select(get_request):
         return start_date,end_date
 
 
-def process_time_series(query, start_date, end_date):
-    """ process qsstats object into json """
+def process_time_series(query, start_date, end_date, count_agg=""):
+    """ process qsstats object into json
+        works only for LogSeRank queries
+    """
 
-    qss = qsstats.QuerySetStats(query, 'refdate')
+    qss = qsstats.QuerySetStats(query, 'refdate', count_agg)
     start = datetime.strptime(start_date, '%Y-%m-%d').date()
     end   = datetime.strptime(end_date, '%Y-%m-%d').date()
     time_series = qss.time_series(start, end, 'weeks') # aggregate by weeks (default is days)
@@ -38,12 +44,14 @@ def home(request):
 
     #new phrase stuff
     #naive return of 5 latest kws added to db
-    phrases_new   = Kw.objects.values('id','phrase','first_seen').order_by('-first_seen')[:5]
+    phrases_new   = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                      annotate(num_ips=Count('ip', distinct = True)).order_by('-phrase_id__first_seen','-num_ips')[:5]
     # get the most recent sunday, so we can count back to the first full week in our dataset
     latest_date   = Kw.objects.values('first_seen').filter(first_seen__week_day=1).order_by('-first_seen')[:2]
     now_date      = latest_date[1]['first_seen']
     # this gets our first monday for which we have a full week
     week_ago      = now_date - timedelta(days=6)
+    two_wks_ago   = now_date - timedelta(days=13)
     four_wks_ago  = now_date - timedelta(days=28)
     p_count       = Kw.objects.filter(first_seen__range=[week_ago,now_date]).count()
     # time series stuff for the bar chart
@@ -55,17 +63,13 @@ def home(request):
 
 
     #missing Kws stuff
-    # get last 7 days of dates, get the 7 days of dates bf that, get kws in each set, compare sets
-    #last_week_end = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
-    #delta = datetime.timedelta(days=7)
-    #new_date = last_week_end - delta
-
-    last_week  = LogSeRank.objects.values('refdate','phrase_id','phrase_id__phrase').order_by('-refdate').distinct()[:7]
-    wk_bf_last = LogSeRank.objects.values('refdate','phrase_id','phrase_id__phrase').order_by('-refdate').distinct()[7:14]
+    last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,now_date])
+    last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago,now_date]).count()
+    wk_bf_last     = Kw.objects.values('id','phrase').filter(last_seen__range=[two_wks_ago,week_ago])
+    wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago,week_ago]).count()
     # keep all in wk_bf_last if not in last_week
-    unique = [{'phrase':x['phrase_id__phrase'],'phrase_id':x['phrase_id']} for x in wk_bf_last if x not in last_week]
-    #missing_kws = Kw.objects.values('id','phrase','first_seen').order_by('-last_seen')[:5]
-    #kws we haven't seen in one week that we saw in the week prior
+    unique = [{'phrase':x['phrase'],'phrase_id':x['id']} for x in wk_bf_last if x not in last_week]
+    unique_cnt = len(unique)
 
 
 
@@ -75,7 +79,8 @@ def home(request):
 
     return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,'last_week':last_week,
                                           'wk_bf_last':wk_bf_last,'week_ago':week_ago,'latest_date':now_date,
-                                          'p_count':p_count,'new_kws_cnt':new_kws_cnt })
+                                          'p_count':p_count,'new_kws_cnt':new_kws_cnt,'last_week_cnt':last_week_cnt,
+                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt })
 
 
 def get_ranks(request=None, start_date="", end_date=""):
@@ -88,33 +93,49 @@ def get_ranks(request=None, start_date="", end_date=""):
     """
     dates    = LogSeRank.objects.values('refdate').distinct()
 
-    ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__tags__name'). \
+    ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
                                  filter(   position__gt = 0,
                                            engine_id__engine__contains = 'Google',
                                            refdate__range=(start_date, end_date)). \
                                  annotate( num_ips=Count('ip', distinct = True),
                                            num_rank=Count('position'),
                                            avg_rank=Avg('position'),
-                                           st_rank = StdDev('position'))[:4000] # FUCKING WORKS
+                                           st_rank = StdDev('position')). \
+                                 order_by('phrase_id__phrase') # FUCKING WORKS
+    """
+
+    list_grp = []
+    ip_sorted = sorted(ip_count, key=operator.itemgetter('phrase_id'))
+    for id,iter in itertools.groupby(ip_sorted,operator.itemgetter('phrase_id')):
+        idList = list(iter)
+        list_grp.append({'phrase_id':id,'phrase':idList[0]['phrase_id__phrase'],'num_ips':idList[0]['num_ips'],
+                      'num_rank':idList[0]['num_rank'],'avg_rank':idList[0]['avg_rank'],
+                      'st_rank':idList[0]['st_rank'],'position':[z['position'] for z in idList]})
+    """
+
+
 
     for dict in ip_count:
         num_ratio = dict['num_rank'] / dict['num_ips']
         dict['ratio'] = round(num_ratio, 2)
 
-    phrase_ip = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
+    phrase_ip   = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
 
     """
     chart / time series data
     """
-    all_phrase  = LogSeRank.objects.values('id','phrase_id','refdate').distinct()
+    all_phrase    = LogSeRank.objects.values('id','phrase_id','refdate').distinct()
 
-    rank_phrase = LogSeRank.objects.values('id','phrase_id','refdate'). \
-                                    filter(   position__gt = 0).distinct()
-    all_engine  = LogSeRank.objects.values('id','engine_id','refdate').distinct()
+    rank_phrase   = LogSeRank.objects.values('phrase_id','refdate').filter(position__gt = 0).distinct()
 
-    all_phrase  = process_time_series(all_phrase,start_date,end_date)
-    rank_phrase = process_time_series(rank_phrase,start_date,end_date)
-    all_engine  = process_time_series(all_engine,start_date,end_date)
+    crazy  = LogSeRank.objects.values('position','refdate').filter(position__gt = 0, refdate__range=[start_date,end_date])
+    #all_engine  = LogSeRank.objects.values('id','engine_id','refdate').distinct()
+    avg_position = process_time_series(crazy,start_date,end_date,Avg('position'))
+    #avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
+    all_phrase   = process_time_series(all_phrase,start_date,end_date)
+    rank_phrase  = process_time_series(rank_phrase,start_date,end_date)
+
+    #all_engine  = process_time_series(all_engine,start_date,end_date)
 
     #debug lines
     sql       = connection.queries
@@ -122,7 +143,8 @@ def get_ranks(request=None, start_date="", end_date=""):
     return render(request,'ranks.html', { 'sql':sql,'phrase_ip':phrase_ip,
                                                'start_date':start_date,'end_date':end_date,
                                                'ip_cnts':ip_count, 'dates':dates,
-                                               'rank_phrase':rank_phrase,'all_phrase':all_phrase,'all_engine':all_engine})
+                                               'rank_phrase':rank_phrase,'all_phrase':all_phrase,
+                                               'avg_position':avg_position})
 
 def get_phrase(request, phrase):
     """ View all objects """
@@ -130,7 +152,7 @@ def get_phrase(request, phrase):
     rankings    = LogSeRank.objects.values('position', 'refdate'). \
                                     filter(phrase_id = phrase, position__gt = 0). \
                                     order_by('refdate')
-    pages       = LogSeRank.objects.values(  'page_id__page', 'position', 'refdate'). \
+    pages       = LogSeRank.objects.values('page_id__page', 'position', 'refdate'). \
                                     filter(   phrase_id = phrase, position__gt = 0). \
                                     distinct(). \
                                     order_by('page_id__page','refdate')
