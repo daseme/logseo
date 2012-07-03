@@ -1,25 +1,25 @@
 <form method="GET">
-<select name="start_date">
-{% for date in dates %}
-    <option value="{{ date.refdate }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
-{% endfor %}
+    <select name="start_date">
+        {% for date in dates %}
+        <option value="{{ date.refdate }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
+        {% endfor %}
 
-</select>
+    </select>
 
-<select name="end_date">
-{% for date in dates %}
-    <option value="{{ date.refdate }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
-{% endfor %}
-</select>
-<input type="radio" name="aggregation" value="day" {% if aggregation = "day" %}checked{% endif %}/> day
-<input type="radio" name="aggregation" value="week" {% if aggregation = "week" %} checked{% endif %}/> week
-<input type="radio" name="aggregation" value="month" {% if aggregation = 'month' %} checked{% endif %}/> month
-<span class="btn-group" data-toggle-name="is_private" data-toggle="buttons-radio" >
-  <button type="button" value="0" class="btn" data-toggle="button">day</button>
-  <button type="button" value="1" class="btn active" data-toggle="button">week</button>
-  <button type="button" value="1" class="btn" data-toggle="button">month</button>
-  <input type="hidden" name="is_private" value="0" />
-<input type="submit" name="submit" class="submit" value="filter dates" />
-</span>
+    <select name="end_date">
+        {% for date in dates %}
+        <option value="{{ date.refdate }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
+        {% endfor %}
+    </select>
+    <input type="radio" name="aggregation" value="day" {% if aggregation = "day" %}checked{% endif %}/> day
+    <input type="radio" name="aggregation" value="week" {% if aggregation = "week" %} checked{% endif %}/> week
+    <input type="radio" name="aggregation" value="month" {% if aggregation = 'month' %} checked{% endif %}/> month
+    <span class="btn-group" data-toggle-name="is_private" data-toggle="buttons-radio" >
+        <button type="button" value="0" class="btn" data-toggle="button">day</button>
+        <button type="button" value="1" class="btn active" data-toggle="button">week</button>
+        <button type="button" value="1" class="btn" data-toggle="button">month</button>
+        <input type="hidden" name="is_private" value="0" />
+        <input type="submit" name="submit" class="submit" value="filter dates" />
+    </span>
 
 </form>

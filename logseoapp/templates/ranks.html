@@ -1,4 +1,5 @@
-{% include "header.html" %}
+{% extends "base.html" %}
+{% block header_scripts %}
 <script language="javascript" type="text/javascript">
 $(document).ready(function() {
     var oTable = $('#example').dataTable( {
@@ -30,10 +31,17 @@ $(document).ready(function() {
         position: relative;
         font-family: Arial, Helvetica, sans-serif;
 }
-#chart,#avg_rank {
+#chart {
+        float:left;
+    }
+#avg_rank {
         float:left;
 }
-#y_axis, #y_axis2 {
+#y_axis {
+	float: left;
+	width: 40px;
+}
+#y_axis_rank {
 	float: left;
 	width: 40px;
 }
@@ -43,10 +51,11 @@ $(document).ready(function() {
 		.rickshaw_graph .detail .date { color: #a0a0a0 }
 </style>
 
-</head>
-<body id="dt_example">
-{% include "navigation.html" %}
-{% include "subpage-sidenav.html" %}
+{% endblock %}
+
+
+ 
+{% block primary %}
 
 <div class="span10">
 {% include "date_form.html" %}
@@ -63,7 +72,7 @@ $(document).ready(function() {
             <h2>Avg Position per Week</h2>
             <hr>
                 <div id="chart_container">
-                    <div id="y_axis2"></div>
+                    <div id="y_axis_rank"></div>
                     <div id="avg_rank"></div>
                 </div>
         </div>
@@ -169,10 +178,11 @@ var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 </script>
 <script>
 
-var graph2 = new Rickshaw.Graph( {
+var graph = new Rickshaw.Graph( {
         element: document.querySelector("#avg_rank"),
         width: 440,
         height: 240,
+        min: 'auto',
         renderer: 'line',
         series: [{
                 name: 'avg rank',
@@ -184,18 +194,18 @@ var graph2 = new Rickshaw.Graph( {
             ]
 } );
 
-var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph2 } );
+var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
 
 var y_axis = new Rickshaw.Graph.Axis.Y( {
-        graph: graph2,
+    graph: graph,
         orientation: 'left',
         tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.getElementById('y_axis'),
+        element: document.getElementById('y_axis_rank'),
 } );
 
-graph2.render();
+graph.render();
 var hoverDetail = new Rickshaw.Graph.HoverDetail( {
-	graph: graph2,
+	graph: graph,
 	formatter: function(series, x, y) {
 		var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
 		var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
@@ -204,9 +214,7 @@ var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 	}
 } );
 </script>
-rank_phrase {{ rank_phrase }} <br>
-avg_position {{ avg_position }}
+
 </div></div>
-</body>
-{% include "footer.html" %}
+{% endblock %}
 

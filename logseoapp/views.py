@@ -131,7 +131,7 @@ def get_ranks(request=None, start_date="", end_date=""):
     crazy  = LogSeRank.objects.values('position','refdate').filter(position__gt = 0, refdate__range=[start_date,end_date])
     #all_engine  = LogSeRank.objects.values('id','engine_id','refdate').distinct()
     avg_position = process_time_series(crazy,start_date,end_date,Avg('position'))
-    #avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
+    avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
     all_phrase   = process_time_series(all_phrase,start_date,end_date)
     rank_phrase  = process_time_series(rank_phrase,start_date,end_date)
 

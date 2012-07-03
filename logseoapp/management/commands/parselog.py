@@ -36,7 +36,7 @@ import searchengines
 import chardet
 import logging
 
-#filename = 'access.20110501'
+
 class Command(BaseCommand):
     args = '<logfile logfile ...>'
     help = 'parses logfile for insert/update db'
@@ -86,8 +86,8 @@ def check_phrase(log_phrase,refdate):
 
     get_phrase = Kw.objects.values('id','phrase','last_seen').filter(phrase = log_phrase)
 
-
-    if get_phrase.exists():#CHECK IF REFDATE > LAST_SEEN!!! Doh!
+    #CHECK IF REFDATE > LAST_SEEN!!! Doh!
+    if get_phrase.exists():
 
         Kw.objects.filter(phrase = log_phrase).update(last_seen = refdate)
         return get_phrase[0]['id']
@@ -137,6 +137,7 @@ def parse_log(filename):
     log_list = []
 
     for line in open(filename):
+
         try:
             data = p.parse(line)
             log_list.append(data)
@@ -153,16 +154,13 @@ def update_list(log_list):
     for d in log_list:
 
         del d['%l'],d['%u'],d['%>s'],d['%b'],d['%{User-agent}i']
-        # convert ip to 32bit packed integer for storing
-        #struct.unpack('L',socket.inet_aton(ip))[0]
-
 
         try:
-
             d['http'] = d.pop('%{Referer}i')
             d['engine'],d['phrase'],d['position'] = get_name_query_rank(d)
             d['ip']   = d.pop('%h')
             d['ip']   = struct.unpack('>L',socket.inet_aton(d['ip']))[0]
+
         except:
             pass
 
@@ -173,14 +171,13 @@ def update_list(log_list):
         try:
             d['refdate'],d['reftime'] = get_date_format(d)
             d['page'] =  get_request_path(d)
-
             del d['%t'],d['%r']
+
         except:
             pass
 
-    #[record.update({'page': get_request_path(d)}) for record in log_list]
-
     return new_log_list
+
 
 def get_name_query_rank(log_dict):
     """ parse (%{Referer}i) for search engine name, querystring, rank """
@@ -203,10 +200,12 @@ def get_name_query_rank(log_dict):
 
     if 'cd' in q_list:
         position = int(q_list['cd'])
+
     else:
         position = 0
 
     return engine,phrase,position
+
 
 def get_date_format(log_dict):
     """ parse apache logline (%t) """
