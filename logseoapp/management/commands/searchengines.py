@@ -1,3 +1,10 @@
+"""
+based on:
+    https://github.com/spiros/URI-ParseSearchString
+
+    converted for easier use in python.
+    update are noted with comments
+"""
 SE_LOOKUPS = {
 
     'answers.yahoo.com'     : { 'name': 'Yahoo Answers', 'q':'p' },

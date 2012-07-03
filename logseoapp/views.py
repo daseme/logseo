@@ -1,4 +1,8 @@
 from __future__ import division
+import numpy
+import nltk
+from nltk import *
+#from nltk.tokenize import *
 from django.shortcuts import render
 from logseoapp.models import LogSeRank, Kw, Page
 from django.db.models import Avg, Count, StdDev
@@ -9,6 +13,7 @@ import time
 import qsstats
 import itertools
 import operator
+
 
 
 
@@ -64,6 +69,14 @@ def home(request):
 
     #missing Kws stuff
     last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,now_date])
+    word_obj       = Kw.objects.values('phrase').filter(last_seen__range=[week_ago,now_date])
+    wordList = []
+    for word in word_obj:
+        wordList.append(word['phrase'])
+    words = [w.lower() for item in wordList for w in
+             nltk.tokenize.word_tokenize(item)]
+    fdist = nltk.FreqDist(words)
+    #fdist = nltk.FreqDist(word.lower() for word in tokenize.word_tokenize(wordList))
     last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago,now_date]).count()
     wk_bf_last     = Kw.objects.values('id','phrase').filter(last_seen__range=[two_wks_ago,week_ago])
     wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago,week_ago]).count()
@@ -80,7 +93,7 @@ def home(request):
     return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,'last_week':last_week,
                                           'wk_bf_last':wk_bf_last,'week_ago':week_ago,'latest_date':now_date,
                                           'p_count':p_count,'new_kws_cnt':new_kws_cnt,'last_week_cnt':last_week_cnt,
-                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt })
+                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,'dictList':fdist })
 
 
 def get_ranks(request=None, start_date="", end_date=""):

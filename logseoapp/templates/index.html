@@ -30,6 +30,24 @@
         <div class="page-header">
             <h1>{{ week_ago }} to {{ latest_date }}</h1>
         </div>
+                <div class="row-fluid">
+            <div class="span3">
+                <h2>New Questions</h2>
+                <p># of ips</p>
+                <p># of search engines</p>
+                <p><a class="btn" href="#">View details &raquo;</a></p>
+            </div><!--/span-->
+            <div class="span3">
+                <h2>New Pages</h2>
+                <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                <p><a class="btn" href="#">View details &raquo;</a></p>
+            </div><!--/span-->
+            <div class="span3">
+                <h2>Pages w kw delta</h2>
+                <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                <p><a class="btn" href="#">View details &raquo;</a></p>
+            </div><!--/span-->
+        </div><!--/row-->
         <div class="row-fluid">
             <div class="span3">
                 {% block content %}
@@ -102,7 +120,7 @@
         </div><!--/row-->
     </div><!--/span-->
 </div><!--/row-->
-
+{{ dictList }}
 <script>
 
     var graph = new Rickshaw.Graph( {

@@ -1,4 +1,7 @@
-"""parses an apache access log file for database consumption.
+"""parses an apache access log file insert/update database
+
+The search engine parsing is based on
+http://search.cpan.org/~sden/URI-ParseSearchString-3.442/lib/URI/ParseSearchString.pm
 
 The return dictionary from the parse function;
 
@@ -18,6 +21,34 @@ The return dictionary from the parse function;
     get_name_query_rank(): get search engine name, query, rank (if present else 0)
     get_date_format(): splits apache date into date and time and reformats for our db
     get_request_path(): pull the requested path from %r apache field
+
+models:
+class Kw(models.Model):
+
+    phrase     = models.CharField(max_length=765)
+    first_seen = models.DateField(null=True)
+    last_seen  = models.DateField(null=True)
+
+class Engine(models.Model):
+
+    engine   = models.CharField(max_length=765)
+
+class Page(models.Model):
+
+    page = models.CharField(max_length=765)
+
+
+class LogSeRank(models.Model):
+
+    ip = models.IntegerField()
+    position = models.IntegerField()
+    phrase_id = models.ForeignKey('Kw',db_column='phrase_id')
+    page_id = models.ForeignKey('Page',db_column='page_id')
+    engine_id = models.ForeignKey('Engine',db_column='engine_id')
+    http = models.TextField()
+    refdate = models.CharField(max_length=765)
+    reftime = models.CharField(max_length=765)
+
 
 """
 from django.core.management.base import BaseCommand, CommandError
