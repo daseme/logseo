@@ -1,7 +1,7 @@
 from __future__ import division
-import numpy
+#import numpy
 import nltk
-from nltk import *
+#from nltk import *
 #from nltk.tokenize import *
 from django.shortcuts import render
 from logseoapp.models import LogSeRank, Kw, Page
@@ -11,8 +11,9 @@ from collections import defaultdict
 from datetime import datetime,timedelta
 import time
 import qsstats
-import itertools
-import operator
+#import itertools
+#import operator
+from operator import itemgetter
 
 
 
@@ -44,11 +45,52 @@ def process_time_series(query, start_date, end_date, count_agg=""):
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
 
+def home_nlp(query):
+    """ return ip-weighted bigram scores for this week last week """
+
+    stop_words = nltk.corpus.stopwords.words('english') + [
+    '.',
+    ',',
+    '--',
+    '\'s',
+    '?',
+    ')',
+    '(',
+    ':',
+    '\'',
+    '\'re',
+    '"',
+    '-',
+    '}',
+    '{',
+    ]
+
+    # assign django query to var
+    phrase_obj = query
+
+    # create ip-weighted list of phrases
+    phrase_list = [p['phrase_id__phrase'].lower()
+                   for p in phrase_obj
+                   for i in xrange(1,p['num_ips'])]
+
+    # tokenize phrases, remove stopwords, creates list of lists
+    toke_phrases = [nltk.tokenize.word_tokenize(p) for p in phrase_list if p not in stop_words]
+
+    # generate bigrams
+    bigram_phrases = [nltk.bigrams(p) for p in toke_phrases]
+
+    # flatten list of lists, so we can score across the lists
+    bigram_words = [item for sublist in bigram_phrases for item in sublist]
+
+    bigram_scores = nltk.FreqDist(bigram_words)
+
+    return bigram_scores,dict(bigram_scores)
+
 def home(request):
     """ retrieve stats for home page """
 
     #new phrase stuff
-    #naive return of 5 latest kws added to db
+    #return 5 most recent kws ordered by ip count
     phrases_new   = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                       annotate(num_ips=Count('ip', distinct = True)).order_by('-phrase_id__first_seen','-num_ips')[:5]
     # get the most recent sunday, so we can count back to the first full week in our dataset
@@ -69,20 +111,27 @@ def home(request):
 
     #missing Kws stuff
     last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,now_date])
-    word_obj       = Kw.objects.values('phrase').filter(last_seen__range=[week_ago,now_date])
-    wordList = []
-    for word in word_obj:
-        wordList.append(word['phrase'])
-    words = [w.lower() for item in wordList for w in
-             nltk.tokenize.word_tokenize(item)]
-    fdist = nltk.FreqDist(words)
-    #fdist = nltk.FreqDist(word.lower() for word in tokenize.word_tokenize(wordList))
     last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago,now_date]).count()
     wk_bf_last     = Kw.objects.values('id','phrase').filter(last_seen__range=[two_wks_ago,week_ago])
     wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago,week_ago]).count()
-    # keep all in wk_bf_last if not in last_week
+    #keep all in wk_bf_last if not in last_week
     unique = [{'phrase':x['phrase'],'phrase_id':x['id']} for x in wk_bf_last if x not in last_week]
     unique_cnt = len(unique)
+
+    #nlp things
+    # this is all well and good, BUT need to factor in ip counts for that case where one rogue searcher
+    # is trying diff phrases over and over, would like weighted avg change
+    w1,this_wk_top10 = home_nlp(LogSeRank.objects.values('phrase_id__phrase'). \
+                                               filter(refdate__range=[week_ago,now_date]). \
+                                               annotate(num_ips=Count('ip', distinct = True)))
+    w2,last_wk_top10 = home_nlp(LogSeRank.objects.values('phrase_id__phrase'). \
+                                               filter(refdate__range=[two_wks_ago,week_ago]). \
+                                               annotate(num_ips=Count('ip', distinct = True)))
+    #subtract last weeks word cnt from this weeks word cnt to find diff
+    topdiff = { k:int(this_wk_top10.get(k,0)) - int(last_wk_top10.get(k,0)) for k in set(this_wk_top10) | set(last_wk_top10) }
+    topdiff = sorted(topdiff.items(), key=itemgetter(1), reverse=True)
+
+
 
 
 
@@ -93,7 +142,8 @@ def home(request):
     return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,'last_week':last_week,
                                           'wk_bf_last':wk_bf_last,'week_ago':week_ago,'latest_date':now_date,
                                           'p_count':p_count,'new_kws_cnt':new_kws_cnt,'last_week_cnt':last_week_cnt,
-                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,'dictList':fdist })
+                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,'this10':this_wk_top10,
+                                          'last10':last_wk_top10, 'topdiff':topdiff,'w1':w1,'w2':w2 })
 
 
 def get_ranks(request=None, start_date="", end_date=""):
