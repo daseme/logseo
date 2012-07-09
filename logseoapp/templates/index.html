@@ -122,11 +122,11 @@
 </div><!--/row-->
 
 <br>
-{{ w1 }}
+
 <br><br>
-{{ w2 }}
+{{ bigram_gainers|slice:":5" }}
 <br><br>
-{{ topdiff }}
+{{ bigram_losers|slice:":5" }}
 <script>
 
     var graph = new Rickshaw.Graph( {

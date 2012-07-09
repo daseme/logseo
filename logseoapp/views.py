@@ -42,11 +42,17 @@ def process_time_series(query, start_date, end_date, count_agg=""):
     start = datetime.strptime(start_date, '%Y-%m-%d').date()
     end   = datetime.strptime(end_date, '%Y-%m-%d').date()
     time_series = qss.time_series(start, end, 'weeks') # aggregate by weeks (default is days)
+
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
 
-def home_nlp(query):
-    """ return ip-weighted bigram scores for this week last week """
+def bigram_stats(query):
+    """ return ip-weighted bigram scores for this week last week
+        accepts query like:
+        LogSeRank.objects.values('phrase_id__phrase'). \
+                          filter(refdate__range=[week_ago,now_date]). \
+                          annotate(num_ips=Count('ip', distinct = True))
+    """
 
     stop_words = nltk.corpus.stopwords.words('english') + [
     '.',
@@ -69,81 +75,91 @@ def home_nlp(query):
     phrase_obj = query
 
     # create ip-weighted list of phrases
+    # not the most efficient method
     phrase_list = [p['phrase_id__phrase'].lower()
                    for p in phrase_obj
                    for i in xrange(1,p['num_ips'])]
 
-    # tokenize phrases, remove stopwords, creates list of lists
-    toke_phrases = [nltk.tokenize.word_tokenize(p) for p in phrase_list if p not in stop_words]
+    # remove stop words
+    phrase_list = [' '.join(w for w in phrase.split() if w.lower() not in stop_words)
+                  for phrase in phrase_list]
+
+    # tokenize phrases, creates list of lists
+    tok_phrases = [nltk.tokenize.word_tokenize(p) for p in phrase_list]
 
     # generate bigrams
-    bigram_phrases = [nltk.bigrams(p) for p in toke_phrases]
+    bigram_phrases = [nltk.bigrams(p) for p in tok_phrases]
 
     # flatten list of lists, so we can score across the lists
     bigram_words = [item for sublist in bigram_phrases for item in sublist]
 
     bigram_scores = nltk.FreqDist(bigram_words)
 
-    return bigram_scores,dict(bigram_scores)
+    return dict(bigram_scores)
 
 def home(request):
     """ retrieve stats for home page """
 
     #new phrase stuff
     #return 5 most recent kws ordered by ip count
-    phrases_new   = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-                                      annotate(num_ips=Count('ip', distinct = True)).order_by('-phrase_id__first_seen','-num_ips')[:5]
+    phrases_new    = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                      annotate(num_ips=Count('ip', distinct = True)). \
+                                      order_by('-phrase_id__first_seen','-num_ips')[:5]
+
     # get the most recent sunday, so we can count back to the first full week in our dataset
-    latest_date   = Kw.objects.values('first_seen').filter(first_seen__week_day=1).order_by('-first_seen')[:2]
-    now_date      = latest_date[1]['first_seen']
+    latest_date    = Kw.objects.values('first_seen').filter(first_seen__week_day=1). \
+                             order_by('-first_seen')[:2]
+
+    now_date       = latest_date[1]['first_seen']
+
     # this gets our first monday for which we have a full week
-    week_ago      = now_date - timedelta(days=6)
-    two_wks_ago   = now_date - timedelta(days=13)
-    four_wks_ago  = now_date - timedelta(days=28)
-    p_count       = Kw.objects.filter(first_seen__range=[week_ago,now_date]).count()
+    week_ago       = now_date - timedelta(days=6)
+    two_wks_ago    = now_date - timedelta(days=13)
+    four_wks_ago   = now_date - timedelta(days=27)
+    p_count        = Kw.objects.filter(first_seen__range=[week_ago,now_date]).count()
+
     # time series stuff for the bar chart
-    phrase_new_ts = Kw.objects.values('first_seen','phrase')
-    qss           = qsstats.QuerySetStats(phrase_new_ts, 'first_seen')
-    new_kws_cnt   = qss.time_series(four_wks_ago, now_date,'weeks') # aggregate by weeks (default is days)
+    phrase_new_ts  = Kw.objects.values('first_seen','phrase')
+    qss            = qsstats.QuerySetStats(phrase_new_ts, 'first_seen')
+    new_kws_cnt    = qss.time_series(four_wks_ago, now_date,'weeks') # aggregate by weeks (default is days)
+
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
-    new_kws_cnt = [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in new_kws_cnt ]
+    new_kws_cnt    = [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in new_kws_cnt ]
 
-
-    #missing Kws stuff
+    # missing Kws stuff
     last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,now_date])
     last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago,now_date]).count()
     wk_bf_last     = Kw.objects.values('id','phrase').filter(last_seen__range=[two_wks_ago,week_ago])
     wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago,week_ago]).count()
-    #keep all in wk_bf_last if not in last_week
-    unique = [{'phrase':x['phrase'],'phrase_id':x['id']} for x in wk_bf_last if x not in last_week]
-    unique_cnt = len(unique)
 
-    #nlp things
-    # this is all well and good, BUT need to factor in ip counts for that case where one rogue searcher
-    # is trying diff phrases over and over, would like weighted avg change
-    w1,this_wk_top10 = home_nlp(LogSeRank.objects.values('phrase_id__phrase'). \
+    # keep all in wk_bf_last if not in last_week
+    unique         = [{'phrase':x['phrase'],'phrase_id':x['id']} for x in wk_bf_last if x not in last_week]
+    unique_cnt     = len(unique)
+
+    # bigram stats
+    bigram_this_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase'). \
                                                filter(refdate__range=[week_ago,now_date]). \
                                                annotate(num_ips=Count('ip', distinct = True)))
-    w2,last_wk_top10 = home_nlp(LogSeRank.objects.values('phrase_id__phrase'). \
+    bigram_last_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase'). \
                                                filter(refdate__range=[two_wks_ago,week_ago]). \
                                                annotate(num_ips=Count('ip', distinct = True)))
-    #subtract last weeks word cnt from this weeks word cnt to find diff
-    topdiff = { k:int(this_wk_top10.get(k,0)) - int(last_wk_top10.get(k,0)) for k in set(this_wk_top10) | set(last_wk_top10) }
-    topdiff = sorted(topdiff.items(), key=itemgetter(1), reverse=True)
 
-
-
+    # subtract last weeks word cnt from this weeks word cnt to find diff
+    bigram_diff    = { k:int(bigram_this_wk.get(k,0)) - int(bigram_last_wk.get(k,0))
+                      for k in set(bigram_last_wk) | set(bigram_last_wk) }
+    bigram_gainers = sorted(bigram_diff.items(), key=itemgetter(1), reverse=True)
+    bigram_losers  = sorted(bigram_diff.items(), key=itemgetter(1), reverse=False)
 
 
     #debug lines
-    sql       = connection.queries
+    sql             = connection.queries
 
 
     return render(request,'index.html', { 'sql':sql, 'phrases_new':phrases_new, 'unique':unique,'last_week':last_week,
                                           'wk_bf_last':wk_bf_last,'week_ago':week_ago,'latest_date':now_date,
                                           'p_count':p_count,'new_kws_cnt':new_kws_cnt,'last_week_cnt':last_week_cnt,
-                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,'this10':this_wk_top10,
-                                          'last10':last_wk_top10, 'topdiff':topdiff,'w1':w1,'w2':w2 })
+                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,
+                                          'bigram_gainers':bigram_gainers,'bigram_losers':bigram_losers })
 
 
 def get_ranks(request=None, start_date="", end_date=""):
