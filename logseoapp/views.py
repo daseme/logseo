@@ -161,7 +161,7 @@ def home(request):
     """
     kw_new_table  = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                       annotate(num_ips=Count('ip', distinct = True)). \
-                                      filter(num_ips__gt = 1,phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
+                                      filter(phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
                                       order_by('-num_ips')[:5]
 
     kw_new_cnt    = Kw.objects.filter(first_seen__range=[week_ago,latest_sunday]).count()
@@ -172,19 +172,29 @@ def home(request):
     """
     new google kw data
     """
-    #kw_g_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-    #                                  annotate(num_ips=Count('ip', distinct = True)). \
-     #                                 filter(engine_id__engine__exact = 'Google',
-      #                                        phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
-       #                               order_by('-num_ips')[:5]
+    kw_g_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                   annotate(num_ips=Count('ip', distinct = True)). \
+                                     filter(engine_id__engine__contains = 'Google',
+                                            phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
+                                   order_by('-num_ips').distinct()
+    kw_g_new_cnt = kw_g_new.count()
 
-    #kw_g_new_cnt = LogSeRank.objects.filter(engine_id__engine = 'Google',
-        #               phrase_id__first_seen__range=[week_ago,latest_sunday]).count()
-    #kw_g_new_cnt = kw_new_cnt.logserank_set.filter(engine_id__engine__exact='Google')
+    kw_g_new_chart     = process_time_series(kw_g_new, week_ago, latest_sunday,'refdate',
+                                             Count('phrase_id', distinct = True),'days')
 
-    #kw_g_new_ts  = Kw.objects.values('first_seen','phrase')
-    #kw_g_cnt     = process_time_series(phrase_new_ts,week_ago, latest_sunday,'first_seen',
-         #                                Count('id', distinct = True),'days')
+    """
+    new google ranked kw data
+    """
+    kw_gr_new     = LogSeRank.objects.values( 'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                    annotate(  num_ips=Count('ip', distinct = True)). \
+                                      filter(  engine_id__engine__contains = 'Google',
+                                               position__gt = 0,
+                                               phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
+                                    order_by(  '-num_ips')
+    kw_gr_new_cnt = kw_gr_new.count()
+
+    kw_gr_new_chart     = process_time_series(kw_gr_new, week_ago, latest_sunday,'refdate',
+                                             Count('phrase_id', distinct = True),'days')
 
     """
     missing kw data
@@ -225,7 +235,9 @@ def home(request):
                                           'se_chart':se_chart,'se_cnt':se_cnt,'ip_diff':ip_diff,'se_diff':se_diff,
                                           'kw_new_chart':kw_new_chart,'last_week_cnt':last_week_cnt,
                                           'lp_chart':lp_chart,'lp_diff':lp_diff,'lp_cnt':lp_cnt,
-                                          #'kw_g_new':kw_g_new,'kw_g_new_cnt':kw_g_new_cnt,
+                                          'kw_g_new':kw_g_new,'kw_g_new_cnt':kw_g_new_cnt, 'kw_g_new_chart':kw_g_new_chart,
+                                          'kw_gr_new':kw_gr_new,'kw_gr_new_cnt':kw_gr_new_cnt,
+                                          'kw_gr_new_chart':kw_gr_new_chart,
                                           'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,
                                           'bigram_gainers':bigram_gainers,'bigram_losers':bigram_losers })
 
