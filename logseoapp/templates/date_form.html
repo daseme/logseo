@@ -1,14 +1,14 @@
 <form method="GET">
     <select name="start_date">
         {% for date in dates %}
-        <option value="{{ date.refdate }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
+        <option value="{{ date.refdate|date:"Y-m-d" }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
         {% endfor %}
 
     </select>
 
     <select name="end_date">
         {% for date in dates %}
-        <option value="{{ date.refdate }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
+        <option value="{{ date.refdate|date:"Y-m-d" }}"  {% if end_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
         {% endfor %}
     </select>
     <input type="radio" name="aggregation" value="day" {% if aggregation = "day" %}checked{% endif %}/> day

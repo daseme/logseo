@@ -103,7 +103,19 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'johnny.middleware.LocalStoreClearMiddleware',
+    'johnny.middleware.QueryCacheMiddleware',
 )
+
+# some johnny settings
+CACHES = {
+    'default' : dict(
+        BACKEND = 'johnny.backends.memcached.MemcachedCache',
+        LOCATION = ['127.0.0.1:11211'],
+        JOHNNY_CACHE = True,
+    )
+}
+JOHNNY_MIDDLEWARE_KEY_PREFIX='logseoapp'
 
 ROOT_URLCONF = 'logseo.urls'
 

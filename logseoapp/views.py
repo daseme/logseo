@@ -8,7 +8,7 @@ from logseoapp.models import LogSeRank, Kw, Page
 from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import time
 import qsstats
 #import itertools
@@ -23,25 +23,23 @@ def date_select(get_request):
     """ defaults to last month in our db, or uses date select forms """
 
     if 'start_date' and 'end_date' in get_request:
-        start_date = get_request['start_date']
-        end_date   = get_request['end_date']
+        start_date =  datetime.strptime(get_request['start_date'], '%Y-%m-%d').date()
+        end_date   =  datetime.strptime(get_request['end_date'], '%Y-%m-%d').date()
         return start_date,end_date
     else:
         end_date = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
         end_date = end_date['refdate'] # possible we don't have a full month here
-        start_date = end_date[:8]+'01' # replace day part of end_date with 01
+        start_date = end_date.replace(day=01) # replace day part of end_date with 01
         return start_date,end_date
 
 
-def process_time_series(query, start_date, end_date, count_agg=""):
+def process_time_series(query, start_date, end_date, date_field='refdate', agg_field="",agg_interval="weeks"):
     """ process qsstats object into json
         works only for LogSeRank queries
     """
 
-    qss = qsstats.QuerySetStats(query, 'refdate', count_agg)
-    start = datetime.strptime(start_date, '%Y-%m-%d').date()
-    end   = datetime.strptime(end_date, '%Y-%m-%d').date()
-    time_series = qss.time_series(start, end, 'weeks') # aggregate by weeks (default is days)
+    qss = qsstats.QuerySetStats(query, 'refdate', agg_field)
+    time_series = qss.time_series(start_date, end_date, agg_interval) # aggregate by weeks (default is days)
 
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
@@ -104,17 +102,17 @@ def home(request):
     #return 5 most recent kws ordered by ip count
     phrases_new    = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                       annotate(num_ips=Count('ip', distinct = True)). \
+                                      filter(num_ips__gt = 1) . \
                                       order_by('-phrase_id__first_seen','-num_ips')[:5]
 
     # get the most recent sunday, so we can count back to the first full week in our dataset
-    latest_date    = Kw.objects.values('first_seen').filter(first_seen__week_day=1). \
-                             order_by('-first_seen')[:2]
+    latest_date    = LogSeRank.objects.values('refdate').filter(refdate__week_day=1). \
+                                     order_by('-refdate')[0]
+    now_date       = latest_date['refdate']
 
-    now_date       = latest_date[1]['first_seen']
-
-    # this gets our first monday for which we have a full week
     week_ago       = now_date - timedelta(days=6)
     two_wks_ago    = now_date - timedelta(days=13)
+    #three_wks_ago  = now_date - timedelta(days=20)
     four_wks_ago   = now_date - timedelta(days=27)
     p_count        = Kw.objects.filter(first_seen__range=[week_ago,now_date]).count()
 
@@ -146,7 +144,7 @@ def home(request):
 
     # subtract last weeks word cnt from this weeks word cnt to find diff
     bigram_diff    = { k:int(bigram_this_wk.get(k,0)) - int(bigram_last_wk.get(k,0))
-                      for k in set(bigram_last_wk) | set(bigram_last_wk) }
+                      for k in set(bigram_last_wk) | set(bigram_this_wk) }
     bigram_gainers = sorted(bigram_diff.items(), key=itemgetter(1), reverse=True)
     bigram_losers  = sorted(bigram_diff.items(), key=itemgetter(1), reverse=False)
 
