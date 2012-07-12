@@ -116,11 +116,11 @@ def home(request):
     """
     ips
     """
-    ips       = LogSeRank.objects.values('ip','refdate'). \
+    ips_ts       = LogSeRank.objects.values('ip','refdate'). \
                                  filter(refdate__range=[week_ago,latest_sunday]). \
                                  distinct()
-    ips_ts    = process_time_series(ips, week_ago, latest_sunday,'refdate',Count('ip', distinct = True),'days')
-    ips_cnt   = ips.count()
+    ips_chart    = process_time_series(ips_ts, week_ago, latest_sunday,'refdate',Count('ip', distinct = True),'days')
+    ips_cnt   = ips_ts.count()
 
     ips_last  = LogSeRank.objects.values('ip','refdate'). \
                                  filter(refdate__range=[two_wks_ago,week_ago]). \
@@ -131,24 +131,60 @@ def home(request):
     """
     search engines
     """
-    se       = LogSeRank.objects.values('engine_id','refdate'). \
+    se_ts       = LogSeRank.objects.values('engine_id','refdate'). \
                                  filter(refdate__range=[week_ago,latest_sunday]). \
                                  distinct()
-    se_ts    = process_time_series(se, week_ago, latest_sunday,'refdate',Count('engine_id', distinct = True),'days')
-    se_cnt   = se.count()
+    se_chart       = process_time_series(se_ts, week_ago, latest_sunday,'refdate',Count('engine_id', distinct = True),'days')
+    se_cnt      = se_ts.count()
+    se_last     = LogSeRank.objects.values('engine_id','refdate'). \
+                                 filter(refdate__range=[two_wks_ago,week_ago]). \
+                                 distinct()
+    se_last_cnt = se_last.count()
+    se_diff     = se_cnt - se_last_cnt
+
+    """
+    landing pages
+    """
+    lp_ts       = LogSeRank.objects.values('page_id','refdate'). \
+                                 filter(refdate__range=[week_ago,latest_sunday]). \
+                                 distinct()
+    lp_chart       = process_time_series(lp_ts, week_ago, latest_sunday,'refdate',Count('page_id', distinct = True),'days')
+    lp_cnt      = lp_ts.count()
+    lp_last     = LogSeRank.objects.values('page_id','refdate'). \
+                                 filter(refdate__range=[two_wks_ago,week_ago]). \
+                                 distinct()
+    lp_last_cnt = lp_last.count()
+    lp_diff     = lp_cnt - lp_last_cnt
 
     """
     new kw data
     """
-    kw_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+    kw_new_table  = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                       annotate(num_ips=Count('ip', distinct = True)). \
                                       filter(num_ips__gt = 1,phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
                                       order_by('-num_ips')[:5]
 
-    kw_new_cnt     = Kw.objects.filter(first_seen__range=[week_ago,latest_sunday]).count()
-    phrase_new_ts  = Kw.objects.values('first_seen','phrase')
-    new_kws_cnt    = process_time_series(phrase_new_ts,week_ago, latest_sunday,'first_seen',
+    kw_new_cnt    = Kw.objects.filter(first_seen__range=[week_ago,latest_sunday]).count()
+    kw_new_ts     = Kw.objects.values('first_seen','phrase')
+    kw_new_chart = process_time_series(kw_new_ts,week_ago, latest_sunday,'first_seen',
                                          Count('id', distinct = True),'days')
+
+    """
+    new google kw data
+    """
+    #kw_g_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+    #                                  annotate(num_ips=Count('ip', distinct = True)). \
+     #                                 filter(engine_id__engine__exact = 'Google',
+      #                                        phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
+       #                               order_by('-num_ips')[:5]
+
+    #kw_g_new_cnt = LogSeRank.objects.filter(engine_id__engine = 'Google',
+        #               phrase_id__first_seen__range=[week_ago,latest_sunday]).count()
+    #kw_g_new_cnt = kw_new_cnt.logserank_set.filter(engine_id__engine__exact='Google')
+
+    #kw_g_new_ts  = Kw.objects.values('first_seen','phrase')
+    #kw_g_cnt     = process_time_series(phrase_new_ts,week_ago, latest_sunday,'first_seen',
+         #                                Count('id', distinct = True),'days')
 
     """
     missing kw data
@@ -183,11 +219,13 @@ def home(request):
     sql             = connection.queries
 
 
-    return render(request,'index.html', { 'sql':sql, 'phrases_new':kw_new, 'kw_new_cnt':kw_new_cnt,'unique':unique,
+    return render(request,'index.html', { 'sql':sql, 'kw_new_table':kw_new_table, 'kw_new_cnt':kw_new_cnt,'unique':unique,
                                           'last_week':last_week,'wk_bf_last':wk_bf_last,'week_ago':week_ago,
-                                          'latest_date':latest_sunday,'ips_ts':ips_ts,'ips_cnt':ips_cnt,
-                                          'se_ts':se_ts,'se_cnt':se_cnt,'ip_diff':ip_diff,
-                                          'new_kws_cnt':new_kws_cnt,'last_week_cnt':last_week_cnt,
+                                          'latest_date':latest_sunday,'ips_chart':ips_chart,'ips_cnt':ips_cnt,
+                                          'se_chart':se_chart,'se_cnt':se_cnt,'ip_diff':ip_diff,'se_diff':se_diff,
+                                          'kw_new_chart':kw_new_chart,'last_week_cnt':last_week_cnt,
+                                          'lp_chart':lp_chart,'lp_diff':lp_diff,'lp_cnt':lp_cnt,
+                                          #'kw_g_new':kw_g_new,'kw_g_new_cnt':kw_g_new_cnt,
                                           'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,
                                           'bigram_gainers':bigram_gainers,'bigram_losers':bigram_losers })
 
