@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block header_scripts %}
+<script language="javascript" type="text/javascript">
+    $(document).ready(function() {
+            var oTable = $('#example').dataTable( {
+                "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+                "bPaginate": true,
+                "sPaginationType": "full_numbers",
+                "aaSorting": [[ 1, "desc" ]]
+                });
+            } );
 
+</script>
 {% endblock %}
 
 

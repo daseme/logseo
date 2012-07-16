@@ -197,6 +197,19 @@ def home(request):
                                              Count('phrase_id', distinct = True),'days')
 
     """
+    new bing kw data
+    """
+    kw_b_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                   annotate(num_ips=Count('ip', distinct = True)). \
+                                     filter(engine_id__engine__contains = 'Bing',
+                                            phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
+                                   order_by('-num_ips').distinct()
+    kw_b_new_cnt = kw_b_new.count()
+
+    kw_b_new_chart     = process_time_series(kw_b_new, week_ago, latest_sunday,'refdate',
+                                             Count('phrase_id', distinct = True),'days')
+
+    """
     missing kw data
     """
     last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,latest_sunday])
@@ -238,6 +251,8 @@ def home(request):
                                           'kw_g_new':kw_g_new,'kw_g_new_cnt':kw_g_new_cnt, 'kw_g_new_chart':kw_g_new_chart,
                                           'kw_gr_new':kw_gr_new,'kw_gr_new_cnt':kw_gr_new_cnt,
                                           'kw_gr_new_chart':kw_gr_new_chart,
+                                          'kw_b_new':kw_b_new,'kw_b_new_cnt':kw_b_new_cnt,
+                                          'kw_b_new_chart':kw_b_new_chart,
                                           'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,
                                           'bigram_gainers':bigram_gainers,'bigram_losers':bigram_losers })
 
@@ -246,11 +261,12 @@ def get_ranks(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
 
     start_date,end_date = date_select(request.GET)
+    dates    = LogSeRank.objects.values('refdate').distinct()
 
     """
     datatable data
     """
-    dates    = LogSeRank.objects.values('refdate').distinct()
+
 
     ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
                                  filter(   position__gt = 0,
@@ -297,13 +313,22 @@ def get_ranks(request=None, start_date="", end_date=""):
                                                'avg_position':avg_position})
 
 def get_phrase(request, phrase):
-    """ View all objects """
+    """ get data on a particular kw query
+        currently doesn't manage 0 values for position/rank well MUST FIX!!
+    """
+
+    start_date,end_date = date_select(request.GET)
+    dates    = LogSeRank.objects.values('refdate').distinct()
+
+
     phrase_name = Kw.objects.values('id','phrase').filter(pk = phrase)
+
     rankings    = LogSeRank.objects.values('position', 'refdate'). \
-                                    filter(phrase_id = phrase, position__gt = 0). \
+                                    filter(phrase_id = phrase, refdate__range=(start_date, end_date)). \
                                     order_by('refdate')
+
     pages       = LogSeRank.objects.values('page_id__page', 'position', 'refdate'). \
-                                    filter(   phrase_id = phrase, position__gt = 0). \
+                                    filter(   phrase_id = phrase,  refdate__range=(start_date, end_date)). \
                                     distinct(). \
                                     order_by('page_id__page','refdate')
 
@@ -311,7 +336,7 @@ def get_phrase(request, phrase):
     #sql = connection.queries
 
 
-    return render(request,'phrase.html', { 'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
+    return render(request,'phrase.html', { 'dates':dates, 'start_date':start_date,'end_date':end_date,'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
 
 
 
@@ -364,14 +389,20 @@ def get_landing_pages(request, start_date="", end_date=""):
                                                     'dates':dates, 'combo':combo,'t_series':t_series})
 
 def get_page(request, page):
+    """ get specific page data """
+
+    start_date,end_date = date_select(request.GET)
+
+    dates         = LogSeRank.objects.values('refdate').distinct()
+
     page_name = Page.objects.values('id','page').filter(pk = page)
 
     rankings  = LogSeRank.objects.values('position', 'refdate'). \
-                                    filter(page_id = page, position__gt = 0). \
+                                    filter(page_id = page, position__gt = 0,refdate__range=(start_date, end_date)). \
                                     order_by('refdate')
 
     kws       = LogSeRank.objects.values('phrase_id','phrase_id__phrase'). \
-                                    filter(   page_id = page). \
+                                    filter(page_id = page, refdate__range=(start_date, end_date)). \
                                     distinct(). \
                                     order_by('phrase_id__phrase')
 
@@ -397,6 +428,6 @@ def get_page(request, page):
     sql = connection.queries
 
 
-    return render(request, 'page.html', { 'sql':sql,'page_name':page_name,'kws':combo,
+    return render(request, 'page.html', { 'sql':sql,'dates':dates, 'start_date':start_date,'end_date':end_date, 'page_name':page_name,'kws':combo,
         'rankings':rankings})
 
