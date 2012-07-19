@@ -51,12 +51,13 @@ class LogSeRank(models.Model):
 
 
 """
-from django.core.management.base import BaseCommand, CommandError
-from django.db import connection
+from cProfile import Profile
+import pstats
+from optparse import make_option
+from django.core.management.base import BaseCommand #, CommandError
 from logseoapp.models import LogSeRank, Engine, Kw, Page
 from datetime import datetime
 import glob
-import urllib
 import urlparse
 import re
 import apachelog
@@ -69,13 +70,20 @@ import logging
 
 
 class Command(BaseCommand):
-    args = '<logfile logfile ...>'
-    help = 'parses logfile for insert/update db'
+    #args = '<logfile logfile ...>'
+    #help = 'parses logfile for insert/update db'
+    option_list = BaseCommand.option_list + (
+    make_option('--profile',
+        action='store_true',
+        dest='profile',
+        default=False,
+        help='run profiler'),
+        )
 
 
-    def handle(self, *args, **options):
+    def _handle(self, *args, **options):
 
-        for filename in glob.glob('/home/kurt/websites/logseo/logseoapp/management/commands/logs/access.20110831'):
+        for filename in glob.glob('/home/kurt/websites/logseo/logseoapp/management/commands/logs/access.20110901'):
 
             dicts = parse_log(filename)
             parsed_list = []
@@ -107,6 +115,23 @@ class Command(BaseCommand):
             my_objects = [LogSeRank(**vals) for vals in parsed_list]
 
             LogSeRank.objects.bulk_create(my_objects)
+
+    def handle(self, *args, **options):
+        """ method for profiling _handle
+            python manage.py parselog --profile > parselog_stats.txt
+
+        """
+
+        if options['profile']:
+            profiler = Profile()
+            profiler.runcall(self._handle, *args, **options)
+
+            stats = pstats.Stats(profiler)
+            stats.strip_dirs().sort_stats('cumulative').print_stats()
+
+        else:
+            self._handle(*args, **options)
+
 
 
 """
