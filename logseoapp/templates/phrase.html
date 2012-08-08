@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block header_scripts %}
+<script type="text/javascript" charset="utf-8" src="/media/d3.layout.js"></script>
+<script src="/media/nv.d3.js"></script>
+<script src="/media/models/sparkline.js"></script>
+<script src="/media/models/sparklinePlus.js"></script>
 <script language="javascript" type="text/javascript">
     $(document).ready(function() {
             var oTable = $('#example').dataTable( {
@@ -39,6 +43,9 @@
                             {% endfor %}
                         </span>
                     </td>
+                    <tr><td>nvd3</td><td>
+                            <div> <svg id="chart1" class="sparkline"></svg></div>
+                    </td>
                 </tr>
             </table>
 
@@ -72,4 +79,33 @@
             </table>
                 {% endblock %}
             </div>
+            
+ 
+
+                                       
+<script>
+//Format A
+nv.addGraph({
+  generate: function() {
+    var chart = nv.models.sparklinePlus()
+                  .width(400)
+                  .height(50)
+
+    d3.select("#chart1")
+    .datum({{ rankings|safe }} )
+      .call(chart);
+
+    return chart;
+  },
+  callback: function(graph) {
+    log("Sparkline rendered");
+  }
+});
+
+
+
+
+
+
+</script>
             {% endblock %}

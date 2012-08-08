@@ -4,7 +4,7 @@ import nltk
 #from nltk import *
 #from nltk.tokenize import *
 from django.shortcuts import render
-from logseoapp.models import LogSeRank, Kw, Page
+from logseoapp.models import LogSeRank, Kw, Page, Client
 from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
@@ -314,7 +314,7 @@ def get_ranks(request=None, start_date="", end_date=""):
 
 def get_phrase(request, phrase):
     """ get data on a particular kw query
-        currently doesn't manage 0 values for position/rank well MUST FIX!!
+
     """
 
     start_date,end_date = date_select(request.GET)
@@ -323,12 +323,17 @@ def get_phrase(request, phrase):
 
     phrase_name = Kw.objects.values('id','phrase').filter(pk = phrase)
 
-    rankings    = LogSeRank.objects.values('position', 'refdate'). \
-                                    filter(phrase_id = phrase, refdate__range=(start_date, end_date)). \
+    ranking_ts    = LogSeRank.objects.values('position', 'refdate'). \
+                                    filter(position__gt = 0,
+                                           phrase_id = phrase,
+                                           refdate__range=(start_date, end_date)). \
                                     order_by('refdate')
+    rankings   = process_time_series(ranking_ts,start_date,end_date,'refdate',Avg('position'))
 
     pages       = LogSeRank.objects.values('page_id__page', 'position', 'refdate'). \
-                                    filter(   phrase_id = phrase,  refdate__range=(start_date, end_date)). \
+                                    filter(position__gt = 0,
+                                           phrase_id = phrase,
+                                           refdate__range=(start_date, end_date)). \
                                     distinct(). \
                                     order_by('page_id__page','refdate')
 
