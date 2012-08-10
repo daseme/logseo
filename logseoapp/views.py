@@ -1,8 +1,6 @@
 from __future__ import division
 #import numpy
 import nltk
-#from nltk import *
-#from nltk.tokenize import *
 from django.shortcuts import render
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from django.db.models import Avg, Count, StdDev
@@ -11,11 +9,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import time
 import qsstats
-#import itertools
-#import operator
 from operator import itemgetter
-
-
 
 
 
@@ -31,6 +25,16 @@ def date_select(get_request):
         end_date = end_date['refdate'] # possible we don't have a full month here
         start_date = end_date.replace(day=01) # replace day part of end_date with 01
         return start_date,end_date
+
+def client_select(get_request):
+    """ defaults to last month in our db, or uses date select forms """
+
+    if 'client_id' in get_request:
+        client_id =  get_request['client_id']
+        return client_id
+    else:
+        client_id = 1
+        return client_id
 
 def last_full_week():
     """ get last full week, start date, end date, in our database """
@@ -105,9 +109,12 @@ def bigram_stats(query):
 
     return dict(bigram_scores)
 
-def home(request):
+def home(request, client_id=""):
     """ retrieve stats for home page,
     restricted to last full week (mon-sun) in our data-set """
+
+    # get clients
+    client = Client.objects.values('id','name')
 
     # get the latest week in our db
     latest_sunday,week_ago = last_full_week()
@@ -134,7 +141,7 @@ def home(request):
     se_ts       = LogSeRank.objects.values('engine_id','refdate'). \
                                  filter(refdate__range=[week_ago,latest_sunday]). \
                                  distinct()
-    se_chart       = process_time_series(se_ts, week_ago, latest_sunday,'refdate',Count('engine_id', distinct = True),'days')
+    se_chart    = process_time_series(se_ts, week_ago, latest_sunday,'refdate',Count('engine_id', distinct = True),'days')
     se_cnt      = se_ts.count()
     se_last     = LogSeRank.objects.values('engine_id','refdate'). \
                                  filter(refdate__range=[two_wks_ago,week_ago]). \
@@ -148,7 +155,7 @@ def home(request):
     lp_ts       = LogSeRank.objects.values('page_id','refdate'). \
                                  filter(refdate__range=[week_ago,latest_sunday]). \
                                  distinct()
-    lp_chart       = process_time_series(lp_ts, week_ago, latest_sunday,'refdate',Count('page_id', distinct = True),'days')
+    lp_chart    = process_time_series(lp_ts, week_ago, latest_sunday,'refdate',Count('page_id', distinct = True),'days')
     lp_cnt      = lp_ts.count()
     lp_last     = LogSeRank.objects.values('page_id','refdate'). \
                                  filter(refdate__range=[two_wks_ago,week_ago]). \
@@ -242,19 +249,39 @@ def home(request):
     sql             = connection.queries
 
 
-    return render(request,'index.html', { 'sql':sql, 'kw_new_table':kw_new_table, 'kw_new_cnt':kw_new_cnt,'unique':unique,
-                                          'last_week':last_week,'wk_bf_last':wk_bf_last,'week_ago':week_ago,
-                                          'latest_date':latest_sunday,'ips_chart':ips_chart,'ips_cnt':ips_cnt,
-                                          'se_chart':se_chart,'se_cnt':se_cnt,'ip_diff':ip_diff,'se_diff':se_diff,
-                                          'kw_new_chart':kw_new_chart,'last_week_cnt':last_week_cnt,
-                                          'lp_chart':lp_chart,'lp_diff':lp_diff,'lp_cnt':lp_cnt,
-                                          'kw_g_new':kw_g_new,'kw_g_new_cnt':kw_g_new_cnt, 'kw_g_new_chart':kw_g_new_chart,
-                                          'kw_gr_new':kw_gr_new,'kw_gr_new_cnt':kw_gr_new_cnt,
+    return render(request,'index.html', { 'sql':sql,
+                                          'client':client,
+                                          'kw_new_table':kw_new_table,
+                                          'kw_new_cnt':kw_new_cnt,
+                                          'unique':unique,
+                                          'last_week':last_week,
+                                          'wk_bf_last':wk_bf_last,
+                                          'week_ago':week_ago,
+                                          'latest_date':latest_sunday,
+                                          'ips_chart':ips_chart,
+                                          'ips_cnt':ips_cnt,
+                                          'se_chart':se_chart,
+                                          'se_cnt':se_cnt,
+                                          'se_diff':se_diff,
+                                          'ip_diff':ip_diff,
+                                          'kw_new_chart':kw_new_chart,
+                                          'last_week_cnt':last_week_cnt,
+                                          'lp_chart':lp_chart,
+                                          'lp_diff':lp_diff,
+                                          'lp_cnt':lp_cnt,
+                                          'kw_g_new':kw_g_new,
+                                          'kw_g_new_cnt':kw_g_new_cnt,
+                                          'kw_g_new_chart':kw_g_new_chart,
+                                          'kw_gr_new':kw_gr_new,
+                                          'kw_gr_new_cnt':kw_gr_new_cnt,
                                           'kw_gr_new_chart':kw_gr_new_chart,
-                                          'kw_b_new':kw_b_new,'kw_b_new_cnt':kw_b_new_cnt,
+                                          'kw_b_new':kw_b_new,
+                                          'kw_b_new_cnt':kw_b_new_cnt,
                                           'kw_b_new_chart':kw_b_new_chart,
-                                          'wk_bf_last_cnt':wk_bf_last_cnt,'unique_cnt':unique_cnt,
-                                          'bigram_gainers':bigram_gainers,'bigram_losers':bigram_losers })
+                                          'wk_bf_last_cnt':wk_bf_last_cnt,
+                                          'unique_cnt':unique_cnt,
+                                          'bigram_gainers':bigram_gainers,
+                                          'bigram_losers':bigram_losers })
 
 
 def get_ranks(request=None, start_date="", end_date=""):
@@ -296,6 +323,7 @@ def get_ranks(request=None, start_date="", end_date=""):
                                   filter(position__gt = 0, refdate__range=[start_date,end_date])
 
     avg_position = process_time_series(ranks_ts,start_date,end_date,'refdate',Avg('position'))
+
     # make ranks negative so lower ranks show higher on the chart
     avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
     all_phrase   = process_time_series(all_phrase,start_date,end_date)
@@ -306,11 +334,15 @@ def get_ranks(request=None, start_date="", end_date=""):
     #debug lines
     sql       = connection.queries
 
-    return render(request,'ranks.html', { 'sql':sql,'phrase_ip':phrase_ip,
-                                               'start_date':start_date,'end_date':end_date,
-                                               'ip_cnts':ip_count, 'dates':dates,
-                                               'rank_phrase':rank_phrase,'all_phrase':all_phrase,
-                                               'avg_position':avg_position})
+    return render(request,'ranks.html', { 'sql':sql,
+                                          'phrase_ip':phrase_ip,
+                                          'start_date':start_date,
+                                          'end_date':end_date,
+                                          'ip_cnts':ip_count,
+                                          'dates':dates,
+                                          'rank_phrase':rank_phrase,
+                                          'all_phrase':all_phrase,
+                                          'avg_position':avg_position})
 
 def get_phrase(request, phrase):
     """ get data on a particular kw query
@@ -341,7 +373,12 @@ def get_phrase(request, phrase):
     #sql = connection.queries
 
 
-    return render(request,'phrase.html', { 'dates':dates, 'start_date':start_date,'end_date':end_date,'phrase_name':phrase_name, 'rankings':rankings, 'pages':pages})
+    return render(request,'phrase.html', { 'dates':dates,
+                                           'start_date':start_date,
+                                           'end_date':end_date,
+                                           'phrase_name':phrase_name,
+                                           'rankings':rankings,
+                                           'pages':pages})
 
 
 
@@ -390,15 +427,19 @@ def get_landing_pages(request, start_date="", end_date=""):
     #debug lines
     sql = connection.queries
 
-    return render(request,'landing_pages.html', { 'sql':sql,'start_date':start_date,'end_date':end_date,
-                                                    'dates':dates, 'combo':combo,'t_series':t_series})
+    return render(request,'landing_pages.html', { 'sql':sql,
+                                                  'start_date':start_date,
+                                                  'end_date':end_date,
+                                                  'dates':dates,
+                                                  'combo':combo,
+                                                  't_series':t_series})
 
 def get_page(request, page):
     """ get specific page data """
 
     start_date,end_date = date_select(request.GET)
 
-    dates         = LogSeRank.objects.values('refdate').distinct()
+    dates     = LogSeRank.objects.values('refdate').distinct()
 
     page_name = Page.objects.values('id','page').filter(pk = page)
 
@@ -433,6 +474,11 @@ def get_page(request, page):
     sql = connection.queries
 
 
-    return render(request, 'page.html', { 'sql':sql,'dates':dates, 'start_date':start_date,'end_date':end_date, 'page_name':page_name,'kws':combo,
+    return render(request, 'page.html', { 'sql':sql,
+                                          'dates':dates,
+                                          'start_date':start_date,
+                                          'end_date':end_date,
+                                          'page_name':page_name,
+                                          'kws':combo,
         'rankings':rankings})
 

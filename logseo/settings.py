@@ -1,6 +1,5 @@
 # Django settings for logseo project.
 
-
 import os
 ROOT_PATH = os.path.dirname(__file__)
 
@@ -15,10 +14,10 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'nsac',                       # Or path to database file if using sqlite3.
-        'USER': 'root',                       # Not used with sqlite3.
-        'PASSWORD': 'gra5y1rd',               # Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql', # Add 'mysql'
+        'NAME': 'you_database',                       # Or path to database file if using sqlite3.
+        'USER': 'your_user',                           # Not used with sqlite3.
+        'PASSWORD': 'your_password',                       # Not used with sqlite3.
         'HOST': 'localhost',                  # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
     }
@@ -187,3 +186,12 @@ LOGGING = {
         },
     }
 }
+
+
+try:
+    from local_settings import *
+except ImportError, e:
+    print 'Unable to load local_settings.py:', e
+
+
+

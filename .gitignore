@@ -8,3 +8,4 @@ access.*
 *.swo
 *.log
 fixtures/*.json
+logseo/local_settings.py
