@@ -3,6 +3,7 @@ from __future__ import division
 import nltk
 from django.shortcuts import render
 from logseoapp.models import LogSeRank, Kw, Page, Client
+from logseoapp.forms import ClientChoice
 from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
@@ -10,7 +11,6 @@ from datetime import datetime, timedelta
 import time
 import qsstats
 from operator import itemgetter
-
 
 
 def date_select(get_request):
@@ -27,20 +27,22 @@ def date_select(get_request):
         return start_date,end_date
 
 def client_select(get_request):
-    """ defaults to last month in our db, or uses date select forms """
+    """ defaults to client_id = 1, or uses client select form """
 
-    if 'client_id' in get_request:
-        client_id =  get_request['client_id']
+    if 'client_list' in get_request:
+        client_id =  get_request['client_list']
         return client_id
     else:
         client_id = 1
         return client_id
 
-def last_full_week():
+def last_full_week(client_id):
     """ get last full week, start date, end date, in our database """
 
-    latest_sunday  = LogSeRank.objects.values('refdate').filter(refdate__week_day=1). \
-                                     order_by('-refdate')[0]
+    latest_sunday  = LogSeRank.objects.values(  'refdate'). \
+                                       filter(  refdate__week_day=1,
+                                                client_id=client_id). \
+                                       order_by('-refdate')[0]
     latest_sunday  = latest_sunday['refdate']
 
     week_ago       = latest_sunday - timedelta(days=6)
@@ -109,70 +111,71 @@ def bigram_stats(query):
 
     return dict(bigram_scores)
 
+def metrics_processing(metrics_list,client_id):
+    """ processes row 1 metrics for dashboard """
+
+    # get the latest week in our db
+    latest_sunday,week_ago = last_full_week(client_id)
+    two_wks_ago    = latest_sunday - timedelta(days=13)
+
+    metric_LOD = []
+
+    for metric in metrics_list:
+        metric_d = {}
+        metric_d['metric_name'] = metric # want better names for display purposes
+        query = LogSeRank.objects.values(metric,'refdate'). \
+                                 filter(refdate__range=[week_ago,latest_sunday],
+                                        client_id=client_id).distinct()
+        metric_d['query_cnt'] = query.count()
+        metric_d['chart'] = process_time_series(query, week_ago, latest_sunday,'refdate',
+                                                Count(metric, distinct = True),'days')
+        query_last = LogSeRank.objects.values(metric,'refdate'). \
+                                 filter(refdate__range=[two_wks_ago,week_ago],
+                                        client_id=client_id).distinct()
+        last_cnt = query_last.count()
+        metric_d['diff'] = metric_d['query_cnt'] - last_cnt
+
+        metric_LOD.append(metric_d)
+
+    return sorted(metric_LOD, key=lambda x: x['metric_name'])
+
+
 def home(request, client_id=""):
     """ retrieve stats for home page,
     restricted to last full week (mon-sun) in our data-set """
 
-    # get clients
-    client = Client.objects.values('id','name')
+    form = ClientChoice()
+
+
+    # get_client
+    client_id = client_select(request.GET)
+
+    # get client name
+    client = Client.objects.values('name').filter(pk=client_id)
 
     # get the latest week in our db
-    latest_sunday,week_ago = last_full_week()
+    latest_sunday,week_ago = last_full_week(client_id)
     two_wks_ago    = latest_sunday - timedelta(days=13)
 
-    """
-    ips
-    """
-    ips_ts       = LogSeRank.objects.values('ip','refdate'). \
-                                 filter(refdate__range=[week_ago,latest_sunday]). \
-                                 distinct()
-    ips_chart    = process_time_series(ips_ts, week_ago, latest_sunday,'refdate',Count('ip', distinct = True),'days')
-    ips_cnt   = ips_ts.count()
+    # row 1 metrics
+    metrics_row_1 = ['ip','engine_id','page_id','phrase_id']
 
-    ips_last  = LogSeRank.objects.values('ip','refdate'). \
-                                 filter(refdate__range=[two_wks_ago,week_ago]). \
-                                 distinct()
-    ips_last_cnt = ips_last.count()
-    ip_diff = ips_cnt - ips_last_cnt
+    metrics_row_1_dict = metrics_processing(metrics_row_1,client_id)
 
-    """
-    search engines
-    """
-    se_ts       = LogSeRank.objects.values('engine_id','refdate'). \
-                                 filter(refdate__range=[week_ago,latest_sunday]). \
-                                 distinct()
-    se_chart    = process_time_series(se_ts, week_ago, latest_sunday,'refdate',Count('engine_id', distinct = True),'days')
-    se_cnt      = se_ts.count()
-    se_last     = LogSeRank.objects.values('engine_id','refdate'). \
-                                 filter(refdate__range=[two_wks_ago,week_ago]). \
-                                 distinct()
-    se_last_cnt = se_last.count()
-    se_diff     = se_cnt - se_last_cnt
 
-    """
-    landing pages
-    """
-    lp_ts       = LogSeRank.objects.values('page_id','refdate'). \
-                                 filter(refdate__range=[week_ago,latest_sunday]). \
-                                 distinct()
-    lp_chart    = process_time_series(lp_ts, week_ago, latest_sunday,'refdate',Count('page_id', distinct = True),'days')
-    lp_cnt      = lp_ts.count()
-    lp_last     = LogSeRank.objects.values('page_id','refdate'). \
-                                 filter(refdate__range=[two_wks_ago,week_ago]). \
-                                 distinct()
-    lp_last_cnt = lp_last.count()
-    lp_diff     = lp_cnt - lp_last_cnt
 
     """
     new kw data
     """
     kw_new_table  = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                       annotate(num_ips=Count('ip', distinct = True)). \
-                                      filter(phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
+                                      filter(phrase_id__first_seen__range=[week_ago,latest_sunday],
+                                             client_id=client_id). \
                                       order_by('-num_ips')[:5]
 
-    kw_new_cnt    = Kw.objects.filter(first_seen__range=[week_ago,latest_sunday]).count()
-    kw_new_ts     = Kw.objects.values('first_seen','phrase')
+    kw_new_cnt    = Kw.objects.filter(first_seen__range=[week_ago,latest_sunday],
+                                      client_id=client_id).count()
+    kw_new_ts     = Kw.objects.values('first_seen','phrase').filter(client_id=client_id)
     kw_new_chart = process_time_series(kw_new_ts,week_ago, latest_sunday,'first_seen',
                                          Count('id', distinct = True),'days')
 
@@ -180,10 +183,11 @@ def home(request, client_id=""):
     new google kw data
     """
     kw_g_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-                                   annotate(num_ips=Count('ip', distinct = True)). \
+                                     annotate(num_ips=Count('ip', distinct = True)). \
                                      filter(engine_id__engine__contains = 'Google',
-                                            phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
-                                   order_by('-num_ips').distinct()
+                                            phrase_id__first_seen__range=[week_ago,latest_sunday],
+                                            client_id=client_id). \
+                                     order_by('-num_ips').distinct()
     kw_g_new_cnt = kw_g_new.count()
 
     kw_g_new_chart     = process_time_series(kw_g_new, week_ago, latest_sunday,'refdate',
@@ -192,12 +196,13 @@ def home(request, client_id=""):
     """
     new google ranked kw data
     """
-    kw_gr_new     = LogSeRank.objects.values( 'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-                                    annotate(  num_ips=Count('ip', distinct = True)). \
-                                      filter(  engine_id__engine__contains = 'Google',
-                                               position__gt = 0,
-                                               phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
-                                    order_by(  '-num_ips')
+    kw_gr_new     = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                      annotate( num_ips=Count('ip', distinct = True)). \
+                                      filter(   engine_id__engine__contains = 'Google',
+                                                position__gt = 0,
+                                                phrase_id__first_seen__range=[week_ago,latest_sunday],
+                                                client_id=client_id). \
+                                      order_by('-num_ips')
     kw_gr_new_cnt = kw_gr_new.count()
 
     kw_gr_new_chart     = process_time_series(kw_gr_new, week_ago, latest_sunday,'refdate',
@@ -206,11 +211,12 @@ def home(request, client_id=""):
     """
     new bing kw data
     """
-    kw_b_new     = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-                                   annotate(num_ips=Count('ip', distinct = True)). \
-                                     filter(engine_id__engine__contains = 'Bing',
-                                            phrase_id__first_seen__range=[week_ago,latest_sunday]) . \
-                                   order_by('-num_ips').distinct()
+    kw_b_new     = LogSeRank.objects.values( 'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
+                                     annotate(num_ips=Count('ip', distinct = True)). \
+                                     filter(  engine_id__engine__contains = 'Bing',
+                                              phrase_id__first_seen__range=[week_ago,latest_sunday],
+                                              client_id=client_id). \
+                                     order_by('-num_ips').distinct()
     kw_b_new_cnt = kw_b_new.count()
 
     kw_b_new_chart     = process_time_series(kw_b_new, week_ago, latest_sunday,'refdate',
@@ -219,10 +225,14 @@ def home(request, client_id=""):
     """
     missing kw data
     """
-    last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,latest_sunday])
-    last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago,latest_sunday]).count()
-    wk_bf_last     = Kw.objects.values('id','phrase').filter(last_seen__range=[two_wks_ago,week_ago])
-    wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago,week_ago]).count()
+    last_week      = Kw.objects.values('id','phrase').filter(last_seen__range=[week_ago,latest_sunday],
+                                                             client_id=client_id)
+    last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago,latest_sunday],
+                                       client_id=client_id).count()
+    wk_bf_last     = Kw.objects.values('id','phrase').filter(last_seen__range=[two_wks_ago,week_ago],
+                                                             client_id=client_id)
+    wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago,week_ago],
+                                       client_id=client_id).count()
 
     # keep all in wk_bf_last if not in last_week
     unique         = [{'phrase':x['phrase'],'phrase_id':x['id']} for x in wk_bf_last if x not in last_week]
@@ -232,10 +242,12 @@ def home(request, client_id=""):
     bigram data
     """
     bigram_this_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase'). \
-                                               filter(refdate__range=[week_ago,latest_sunday]). \
+                                               filter(refdate__range=[week_ago,latest_sunday],
+                                                      client_id=client_id). \
                                                annotate(num_ips=Count('ip', distinct = True)))
     bigram_last_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase'). \
-                                               filter(refdate__range=[two_wks_ago,week_ago]). \
+                                               filter(refdate__range=[two_wks_ago,week_ago],
+                                                      client_id=client_id). \
                                                annotate(num_ips=Count('ip', distinct = True)))
 
     # subtract last weeks word cnt from this weeks word cnt to find diff
@@ -249,7 +261,9 @@ def home(request, client_id=""):
     sql             = connection.queries
 
 
-    return render(request,'index.html', { 'sql':sql,
+    return render(request,'dashboard/index.html', { 'sql':sql,
+                                          'form':form,
+                                          'metrics_row_1_dict':metrics_row_1_dict,
                                           'client':client,
                                           'kw_new_table':kw_new_table,
                                           'kw_new_cnt':kw_new_cnt,
@@ -258,17 +272,8 @@ def home(request, client_id=""):
                                           'wk_bf_last':wk_bf_last,
                                           'week_ago':week_ago,
                                           'latest_date':latest_sunday,
-                                          'ips_chart':ips_chart,
-                                          'ips_cnt':ips_cnt,
-                                          'se_chart':se_chart,
-                                          'se_cnt':se_cnt,
-                                          'se_diff':se_diff,
-                                          'ip_diff':ip_diff,
                                           'kw_new_chart':kw_new_chart,
                                           'last_week_cnt':last_week_cnt,
-                                          'lp_chart':lp_chart,
-                                          'lp_diff':lp_diff,
-                                          'lp_cnt':lp_cnt,
                                           'kw_g_new':kw_g_new,
                                           'kw_g_new_cnt':kw_g_new_cnt,
                                           'kw_g_new_chart':kw_g_new_chart,
@@ -287,14 +292,15 @@ def home(request, client_id=""):
 def get_ranks(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
 
+
+    form = ClientChoice()
+
     start_date,end_date = date_select(request.GET)
     dates    = LogSeRank.objects.values('refdate').distinct()
 
     """
     datatable data
     """
-
-
     ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
                                  filter(   position__gt = 0,
                                            engine_id__engine__contains = 'Google',
@@ -335,6 +341,7 @@ def get_ranks(request=None, start_date="", end_date=""):
     sql       = connection.queries
 
     return render(request,'ranks.html', { 'sql':sql,
+                                          'form':form,
                                           'phrase_ip':phrase_ip,
                                           'start_date':start_date,
                                           'end_date':end_date,

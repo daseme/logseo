@@ -8,8 +8,16 @@
             </a>
             <a class="brand" href="/">LOGseO</a>
             <div class="btn-group pull-right">
-                <a class="btn" href="/clients/add/">
-                    <i class="icon-plus"></i> Add Client
+                <a class="btn dropdown-toggle" href=".">
+                    <i class="caret"></i> Change Client
+                    <form method='get'>
+                        {% csrf_token %}
+                        {{ form.client_list|as_bootstrap }}
+                        <div class="actions">
+                            <button type="submit" class="btn primary">Submit</button>
+                        </div>
+                    </form>
+
                 </a>
                 <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
                     <i class="icon-user"></i> Username

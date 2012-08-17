@@ -8,6 +8,7 @@
 # into your database.
 
 from django.db import models
+from django.forms import ModelForm
 from taggit.managers import TaggableManager
 from django.db.models import Avg, Count
 
@@ -22,6 +23,12 @@ class Client(models.Model):
 
     class Meta:
         db_table = u'logseoapp_client'
+
+class ClientForm(ModelForm):
+    class Meta:
+        model = Client
+
+
 
 class KwCntManager(models.Manager):
     def kw_count(self, keyword):

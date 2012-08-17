@@ -128,7 +128,8 @@
 
 {% block primary %}
 
-<div class="span10">
+<div class="span12">
+
     {% include "date_form.html" %}
     <div class="row-fluid">
         <div class="span12">
@@ -188,7 +189,7 @@
 
         var graph = new Rickshaw.Graph( {
             element: document.querySelector("#chart"),
-            width: 440,
+            width: 400,
             height: 250,
             series: [{
                 data: {{t_series|safe}},

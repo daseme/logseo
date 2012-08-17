@@ -84,18 +84,20 @@ class Command(BaseCommand):
 
             dicts = parse_log(log_path + filename)
             parsed_list = []
+            print client_id
 
             for d in dicts:
 
                 log_phrase = d['phrase'].strip()
+                #print log_phrase
                 encoding = chardet.detect(log_phrase)
 
                 try:
                     encoding['encoding'] == 'ascii'
-                    phrase_id      = check_phrase(log_phrase,d['refdate'],client_id)
+                    d['client_id'] = Client.objects.get(pk=client_id)
+                    phrase_id      = check_phrase(log_phrase,d['refdate'],d['client_id'])
                     engine_id      = check_engine(d['engine'])
-                    page_id        = check_page(d['page'],client_id)
-                    d['client_id'] = Client.objects.get(id=client_id)
+                    page_id        = check_page(d['page'],d['client_id'])
                     d['phrase_id'] = Kw.objects.get(pk=phrase_id)
                     d['engine_id'] = Engine.objects.get(pk=engine_id)
                     d['page_id']   = Page.objects.get(pk=page_id)
@@ -109,7 +111,7 @@ class Command(BaseCommand):
                                         'reftime':d['reftime'],
                                         'client_id':d['client_id']})
 
-                except:
+                except (RuntimeError, TypeError, NameError):
                     logging.basicConfig(filename='example.log',level=logging.INFO)
                     logging.info("Unable to parse %s" % d)
                     dicts.remove(d)

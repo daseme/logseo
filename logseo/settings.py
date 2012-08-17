@@ -158,6 +158,7 @@ INSTALLED_APPS = (
     #'logseo.logseoapp.parselog',
     'south',
     'taggit',
+
 )
 HAYSTACK_SITECONF = 'logseoapp.search_sites'
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
