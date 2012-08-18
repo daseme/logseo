@@ -122,14 +122,14 @@ def metrics_processing_row1(metrics_list,client_id):
 
     for metric in metrics_list:
         metric_d = {}
-        metric_d['metric_name'] = metric # NEED BETTER NAMES FOR DISPLAY
-        query = LogSeRank.objects.values(metric,'refdate'). \
+        metric_d['metric_name'] = metric['metric_name']
+        query = LogSeRank.objects.values(metric['field'],'refdate'). \
                                  filter(refdate__range=[week_ago,latest_sunday],
                                         client_id=client_id).distinct()
         metric_d['query_cnt'] = query.count()
         metric_d['chart'] = process_time_series(query, week_ago, latest_sunday,'refdate',
-                                                Count(metric, distinct = True),'days')
-        query_last = LogSeRank.objects.values(metric,'refdate'). \
+                                                Count(metric['field'], distinct = True),'days')
+        query_last = LogSeRank.objects.values(metric['field'],'refdate'). \
                                  filter(refdate__range=[two_wks_ago,week_ago],
                                         client_id=client_id).distinct()
         last_cnt = query_last.count()
@@ -153,7 +153,7 @@ def metrics_processing_row2(engine_list,client_id):
 
     for engine in engine_list:
         metric_d = {}
-        metric_d['title'] = engine['title']
+        metric_d['metric_name'] = engine['metric_name']
         query = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                   annotate( num_ips=Count('ip', distinct = True)). \
                                   filter(   engine_id__engine__contains =  engine['engine'],
@@ -168,7 +168,7 @@ def metrics_processing_row2(engine_list,client_id):
 
         metric_LOD.append(metric_d)
 
-    return sorted(metric_LOD, key=lambda x: x['title'])
+    return sorted(metric_LOD, key=lambda x: x['metric_name'])
 
 
 def home(request, client_id=""):
@@ -176,7 +176,6 @@ def home(request, client_id=""):
     restricted to last full week (mon-sun) in our data-set """
 
     form = ClientChoice()
-
 
     # client from form
     client_id = client_select(request.GET)
@@ -189,77 +188,19 @@ def home(request, client_id=""):
     two_wks_ago    = latest_sunday - timedelta(days=13)
 
     # row 1 metrics
-    metrics_row1 = ['ip','engine_id','page_id','phrase_id']
+    metrics_row1 = [{'field':'ip','metric_name':'Organic Visits'},
+                    {'field':'engine_id','metric_name':'Search Engines'},
+                    {'field':'page_id','metric_name':'Pages Visited'},
+                    {'field':'phrase_id','metric_name':'Search Queries'}]
 
     metrics_row1_dict = metrics_processing_row1(metrics_row1,client_id)
 
-
-    # query root
-    query_kw       = LogSeRank.objects.values('phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-                                       annotate( num_ips=Count('ip', distinct = True))
-
-    """
-    new kw data
-    """
-    engine_list = [{'engine':'','position':-1,'title':'New Keywords'},
-                   {'engine':'Google','position':-1,'title':'New Google'},
-                   {'engine':'Google','position':0,'title':'New Google Ranked'},
-                   {'engine':'Bing','position':-1,'title':'New Bing'}]
+    # row 2 metrics
+    engine_list = [{'engine':'','position':-1,'metric_name':'New Keywords'},#all engines
+                   {'engine':'Google','position':-1,'metric_name':'New Google'},
+                   {'engine':'Google','position':0,'metric_name':'New Google Ranked'},
+                   {'engine':'Bing','position':-1,'metric_name':'New Bing'}]
     metrics_row2_dict = metrics_processing_row2(engine_list,client_id)
-
-
-    kw_new_table   = query_kw. \
-                                      filter(phrase_id__first_seen__range=[week_ago,latest_sunday],
-                                             client_id=client_id). \
-                                      order_by('-num_ips')
-
-    kw_new_cnt     = Kw.objects.filter(first_seen__range=[week_ago,latest_sunday],
-                                      client_id=client_id).count()
-    kw_new_ts      = Kw.objects.values('first_seen','phrase').filter(client_id=client_id)
-    kw_new_chart   = process_time_series(kw_new_ts,week_ago, latest_sunday,'first_seen',
-                                         Count('id', distinct = True),'days')
-
-
-
-    """
-    new google ranked kw data
-    """
-    kw_gr_new     = query_kw. \
-                                      filter(   engine_id__engine__contains = 'Google',
-                                                position__gt = 0,
-                                                phrase_id__first_seen__range=[week_ago,latest_sunday],
-                                                client_id=client_id). \
-                                      order_by('-num_ips').distinct()
-    kw_gr_new_cnt = kw_gr_new.count()
-
-    kw_gr_new_chart     = process_time_series(kw_gr_new, week_ago, latest_sunday,'refdate',
-                                             Count('phrase_id', distinct = True),'days')
-
-    """
-    new google kw data
-    """
-    kw_g_new       = query_kw. \
-                                     filter(engine_id__engine__contains = 'Google',
-                                            phrase_id__first_seen__range=[week_ago,latest_sunday],
-                                            client_id=client_id). \
-                                     order_by('-num_ips').distinct()
-    kw_g_new_cnt   = kw_g_new.count()
-
-    kw_g_new_chart = process_time_series(kw_g_new, week_ago, latest_sunday,'refdate',
-                                             Count('phrase_id', distinct = True),'days')
-
-    """
-    new bing kw data
-    """
-    kw_b_new     = query_kw. \
-                                     filter(  engine_id__engine__contains = 'Bing',
-                                              phrase_id__first_seen__range=[week_ago,latest_sunday],
-                                              client_id=client_id). \
-                                     order_by('-num_ips').distinct()
-    kw_b_new_cnt = kw_b_new.count()
-
-    kw_b_new_chart     = process_time_series(kw_b_new, week_ago, latest_sunday,'refdate',
-                                             Count('phrase_id', distinct = True),'days')
 
     """
     missing kw data
@@ -284,6 +225,7 @@ def home(request, client_id=""):
                                                filter(refdate__range=[week_ago,latest_sunday],
                                                       client_id=client_id). \
                                                annotate(num_ips=Count('ip', distinct = True)))
+
     bigram_last_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase'). \
                                                filter(refdate__range=[two_wks_ago,week_ago],
                                                       client_id=client_id). \
@@ -300,29 +242,18 @@ def home(request, client_id=""):
     sql             = connection.queries
 
 
-    return render(request,'dashboard/index.html', { 'sql':sql,
+    return render(request,'dashboard/index.html', {
+                                          'sql':sql,
                                           'form':form,
                                           'metrics_row1_dict':metrics_row1_dict,
                                           'metrics_row2_dict':metrics_row2_dict,
                                           'client':client,
-                                          'kw_new_table':kw_new_table,
-                                          'kw_new_cnt':kw_new_cnt,
                                           'unique':unique,
                                           'last_week':last_week,
                                           'wk_bf_last':wk_bf_last,
                                           'week_ago':week_ago,
                                           'latest_date':latest_sunday,
-                                          'kw_new_chart':kw_new_chart,
                                           'last_week_cnt':last_week_cnt,
-                                          'kw_g_new':kw_g_new,
-                                          'kw_g_new_cnt':kw_g_new_cnt,
-                                          'kw_g_new_chart':kw_g_new_chart,
-                                          'kw_gr_new':kw_gr_new,
-                                          'kw_gr_new_cnt':kw_gr_new_cnt,
-                                          'kw_gr_new_chart':kw_gr_new_chart,
-                                          'kw_b_new':kw_b_new,
-                                          'kw_b_new_cnt':kw_b_new_cnt,
-                                          'kw_b_new_chart':kw_b_new_chart,
                                           'wk_bf_last_cnt':wk_bf_last_cnt,
                                           'unique_cnt':unique_cnt,
                                           'bigram_gainers':bigram_gainers,
