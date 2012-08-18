@@ -1,175 +1,12 @@
 from __future__ import division
-#import numpy
-import nltk
+from utils.view import *
 from django.shortcuts import render
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from logseoapp.forms import ClientChoice
 from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
-from datetime import datetime, timedelta
-import time
-import qsstats
 from operator import itemgetter
-
-
-def date_select(get_request):
-    """ defaults to last month in our db, or uses date select forms """
-
-    if 'start_date' and 'end_date' in get_request:
-        start_date =  datetime.strptime(get_request['start_date'], '%Y-%m-%d').date()
-        end_date   =  datetime.strptime(get_request['end_date'], '%Y-%m-%d').date()
-        return start_date,end_date
-    else:
-        end_date = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
-        end_date = end_date['refdate'] # possible we don't have a full month here
-        start_date = end_date.replace(day=01) # replace day part of end_date with 01
-        return start_date,end_date
-
-def client_select(get_request):
-    """ defaults to client_id = 1, or uses client select form """
-
-    if 'client_list' in get_request:
-        client_id =  get_request['client_list']
-        return client_id
-    else:
-        client_id = 1
-        return client_id
-
-def last_full_week(client_id):
-    """ get last full week, start date, end date, in our database """
-
-    latest_sunday  = LogSeRank.objects.values(  'refdate'). \
-                                       filter(  refdate__week_day=1,
-                                                client_id=client_id). \
-                                       order_by('-refdate')[0]
-    latest_sunday  = latest_sunday['refdate']
-
-    week_ago       = latest_sunday - timedelta(days=6)
-    return latest_sunday,week_ago
-
-
-def process_time_series(query, start_date, end_date, date_field="refdate", agg_field="", agg_interval="weeks"):
-    """ process qsstats object into json
-
-    """
-
-    qss = qsstats.QuerySetStats(query, date_field, agg_field)
-    time_series = qss.time_series(start_date, end_date, agg_interval) # aggregate by weeks (default is days)
-
-    # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
-    return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
-
-def bigram_stats(query):
-    """ return ip-weighted bigram scores for this week last week
-        accepts query like:
-        LogSeRank.objects.values('phrase_id__phrase'). \
-                          filter(refdate__range=[week_ago,now_date]). \
-                          annotate(num_ips=Count('ip', distinct = True))
-    """
-
-    stop_words = nltk.corpus.stopwords.words('english') + [
-    '.',
-    ',',
-    '--',
-    '\'s',
-    '?',
-    ')',
-    '(',
-    ':',
-    '\'',
-    '\'re',
-    '"',
-    '-',
-    '}',
-    '{',
-    ]
-
-    # assign django query to var
-    phrase_obj = query
-
-    # create ip-weighted list of phrases
-    # not the most efficient method
-    phrase_list = [p['phrase_id__phrase'].lower()
-                   for p in phrase_obj
-                   for i in xrange(1,p['num_ips'])]
-
-    # remove stop words
-    phrase_list = [' '.join(w for w in phrase.split() if w.lower() not in stop_words)
-                  for phrase in phrase_list]
-
-    # tokenize phrases, creates list of lists
-    tok_phrases = [nltk.tokenize.word_tokenize(p) for p in phrase_list]
-
-    # generate bigrams
-    bigram_phrases = [nltk.bigrams(p) for p in tok_phrases]
-
-    # flatten list of lists, so we can score across the lists
-    bigram_words = [item for sublist in bigram_phrases for item in sublist]
-
-    bigram_scores = nltk.FreqDist(bigram_words)
-
-    return dict(bigram_scores)
-
-def metrics_processing_row1(metrics_list,client_id):
-    """ processes row 1 metrics for dashboard """
-
-    # get the latest week in our db
-    latest_sunday,week_ago = last_full_week(client_id)
-    two_wks_ago    = latest_sunday - timedelta(days=13)
-
-    metric_LOD = []
-
-    for metric in metrics_list:
-        metric_d = {}
-        metric_d['metric_name'] = metric['metric_name']
-        query = LogSeRank.objects.values(metric['field'],'refdate'). \
-                                 filter(refdate__range=[week_ago,latest_sunday],
-                                        client_id=client_id).distinct()
-        metric_d['query_cnt'] = query.count()
-        metric_d['chart'] = process_time_series(query, week_ago, latest_sunday,'refdate',
-                                                Count(metric['field'], distinct = True),'days')
-        query_last = LogSeRank.objects.values(metric['field'],'refdate'). \
-                                 filter(refdate__range=[two_wks_ago,week_ago],
-                                        client_id=client_id).distinct()
-        last_cnt = query_last.count()
-        metric_d['diff'] = metric_d['query_cnt'] - last_cnt
-
-        metric_LOD.append(metric_d)
-
-    return sorted(metric_LOD, key=lambda x: x['metric_name'])
-
-
-def metrics_processing_row2(engine_list,client_id):
-    """ processes row 2 metrics for dashboard
-        engine specific metrics
-    """
-
-    # get the latest week in our db
-    latest_sunday,week_ago = last_full_week(client_id)
-
-
-    metric_LOD = []
-
-    for engine in engine_list:
-        metric_d = {}
-        metric_d['metric_name'] = engine['metric_name']
-        query = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
-                                  annotate( num_ips=Count('ip', distinct = True)). \
-                                  filter(   engine_id__engine__contains =  engine['engine'],
-                                            position__gt =  engine['position'],
-                                            phrase_id__first_seen__range=[week_ago,latest_sunday],
-                                            client_id=client_id). \
-                                  order_by('-num_ips').distinct()
-        metric_d['query_result'] = query
-        metric_d['query_cnt'] = query.count()
-        metric_d['chart'] =process_time_series(query,week_ago,latest_sunday,'refdate',
-                                         Count('id', distinct = True),'days')
-
-        metric_LOD.append(metric_d)
-
-    return sorted(metric_LOD, key=lambda x: x['metric_name'])
-
 
 def home(request, client_id=""):
     """ retrieve stats for home page,
@@ -188,19 +25,18 @@ def home(request, client_id=""):
     two_wks_ago    = latest_sunday - timedelta(days=13)
 
     # row 1 metrics
-    metrics_row1 = [{'field':'ip','metric_name':'Organic Visits'},
+    metrics_row1 = [{'field':'ip','metric_name':'Organic Visitors'},
                     {'field':'engine_id','metric_name':'Search Engines'},
                     {'field':'page_id','metric_name':'Pages Visited'},
                     {'field':'phrase_id','metric_name':'Search Queries'}]
-
     metrics_row1_dict = metrics_processing_row1(metrics_row1,client_id)
 
     # row 2 metrics
-    engine_list = [{'engine':'','position':-1,'metric_name':'New Keywords'},#all engines
-                   {'engine':'Google','position':-1,'metric_name':'New Google'},
-                   {'engine':'Google','position':0,'metric_name':'New Google Ranked'},
-                   {'engine':'Bing','position':-1,'metric_name':'New Bing'}]
-    metrics_row2_dict = metrics_processing_row2(engine_list,client_id)
+    metrics_row2 = [{'engine':'','position':-1,'metric_name':'New Queries'}, # all engines
+                    {'engine':'Google','position':-1,'metric_name':'New Google Queries'},
+                    {'engine':'Google','position':0,'metric_name':'New Google Ranked Queries'},
+                    {'engine':'Bing','position':-1,'metric_name':'New Bing Queries'}]
+    metrics_row2_dict = metrics_processing_row2(metrics_row2,client_id)
 
     """
     missing kw data
@@ -262,7 +98,6 @@ def home(request, client_id=""):
 
 def get_ranks(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
-
 
     form = ClientChoice()
 
@@ -458,5 +293,5 @@ def get_page(request, page):
                                           'end_date':end_date,
                                           'page_name':page_name,
                                           'kws':combo,
-        'rankings':rankings})
+                                          'rankings':rankings})
 
