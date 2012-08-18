@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+<form method='get'>
+      
+{% csrf_token %}
+{{ form.client_list|as_bootstrap }}
+
+<div class="actions">
+</div>
+</form>
