@@ -12,10 +12,12 @@ def home(request, client_id=""):
     """ retrieve stats for home page,
     restricted to last full week (mon-sun) in our data-set """
 
-    form = ClientChoice()
+
 
     # client from form
     client_id = client_select(request.GET)
+
+    form = ClientChoice(initial={'client_list': client_id})
 
     # client name
     client = Client.objects.values('name').filter(pk=client_id)
