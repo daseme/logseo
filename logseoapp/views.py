@@ -97,6 +97,88 @@ def home(request, client_id=""):
                                           'bigram_gainers':bigram_gainers,
                                           'bigram_losers':bigram_losers })
 
+def get_queries(request=None, start_date="", end_date=""):
+    """ get rank data for kws, default dates set in date_select() fx """
+
+
+
+    """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
+
+    form = ClientChoice(initial={'client_list': client_id})
+
+    # client name
+    client = Client.objects.values('name').filter(pk=client_id)
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
+    dates    = LogSeRank.objects.values('refdate').distinct()
+
+
+    """
+    unique view code
+    """
+    """
+    datatable data
+    """
+    ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
+                                 filter(   engine_id__engine__contains = 'Google',
+                                           refdate__range=(start_date, end_date),
+                                           client_id=client_id). \
+                                 annotate( num_ips=Count('ip', distinct = True),
+                                           num_rank=Count('position'),
+                                           avg_rank=Avg('position'),
+                                           st_rank = StdDev('position')). \
+                                 order_by('phrase_id__phrase') # FUCKING WORKS
+
+
+    for dict in ip_count:
+        num_ratio = dict['num_rank'] / dict['num_ips']
+        dict['ratio'] = round(num_ratio, 2)
+
+    phrase_ip   = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
+
+    """
+    chart / time series data
+    """
+    all_phrase    = LogSeRank.objects.values('id','phrase_id','refdate'). \
+                                      filter(client_id=client_id).distinct()
+
+    rank_phrase   = LogSeRank.objects.values('phrase_id','refdate'). \
+                                      filter(client_id=client_id).distinct()
+
+    ranks_ts  = LogSeRank.objects.values('position','refdate'). \
+                                  filter(refdate__range=[start_date,end_date],
+                                         client_id=client_id)
+
+    avg_position = process_time_series(ranks_ts,start_date,end_date,'refdate',Avg('position'))
+
+    # make ranks negative so lower ranks show higher on the chart
+    avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
+    all_phrase   = process_time_series(all_phrase,start_date,end_date)
+    rank_phrase  = process_time_series(rank_phrase,start_date,end_date)
+
+
+
+    #debug lines
+    sql       = connection.queries
+
+    return render(request,'queries.html', { 'sql':sql,
+                                          'form':form,
+                                          'client':client,
+                                          'client_id':client_id,
+                                          'phrase_ip':phrase_ip,
+                                          'start_date':start_date,
+                                          'end_date':end_date,
+                                          'last_data_date':last_data_date,
+                                          'ip_cnts':ip_count,
+                                          'dates':dates,
+                                          'rank_phrase':rank_phrase,
+                                          'all_phrase':all_phrase,
+                                          'avg_position':avg_position})
+
 
 def get_ranks(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
@@ -176,6 +258,7 @@ def get_ranks(request=None, start_date="", end_date=""):
                                           'phrase_ip':phrase_ip,
                                           'start_date':start_date,
                                           'end_date':end_date,
+                                          'last_data_date':last_data_date,
                                           'ip_cnts':ip_count,
                                           'dates':dates,
                                           'rank_phrase':rank_phrase,
@@ -374,4 +457,10 @@ def get_page(request, page):
                                           'page_name':page_name,
                                           'kws':combo,
                                           'rankings':rankings})
+
+def get_watchlist(request):
+    """ get/create watchlist """
+
+
+    return render(request, 'watchlist.html', {  })
 

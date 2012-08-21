@@ -8,14 +8,13 @@ admin.autodiscover()
 urlpatterns = patterns('',
 
     url(r'^ranks/$', 'logseoapp.views.get_ranks'),
-
-    (r'^phrase/(\d{1,6})/$', 'logseoapp.views.get_phrase'),
+    url(r'^queries/$', 'logseoapp.views.get_queries'),
+    url(r'^queries/individual-query/(\d{1,6})/$', 'logseoapp.views.get_phrase'),
     url(r'^landing_pages/$', 'logseoapp.views.get_landing_pages'),
     url(r'^landing_pages/page/(\d{1,6})/$', 'logseoapp.views.get_page'),
     (r'^search/', include('haystack.urls')),
-    # Examples:
     url(r'^$', 'logseoapp.views.home', name='home'),
-    # url(r'^logseo/', include('logseo.foo.urls')),
+    url(r'^watchlist/', 'logseoapp.views.get_watchlist'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

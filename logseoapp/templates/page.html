@@ -102,8 +102,8 @@ $('#reportrange').daterangepicker(
             <thead>
                 <tr>
                     <th>phrase</th>
-                    <th>ipcount</th>
-                    <th>gcount</th>
+                    <th>visitors</th>
+                    <th>google</th>
                     <th>bing</th>
                     <th>yahoo</th>
                 </tr>
@@ -113,12 +113,12 @@ $('#reportrange').daterangepicker(
                 {% for phrase in rank_list %}
                 <tr>
                     <td style="text-align:left;">
-                        <a href="/phrase/{% for item in phrase.list %}{{ item.phrase_id }}{% endfor %}">{{ phrase.grouper }}</a>
+                        <a href="/queries/individual-query/{% for item in phrase.list %}{{ item.phrase_id }}{% endfor %}">{{ phrase.grouper }}</a>
                     </td>
 
                     {% for item in phrase.list %}
                     <td>
-                        {{ item.num_ip }}{{ item.phrase_id }}
+                        {{ item.num_ip }}
                     </td>
                     <td>
                         {{item.num_google}}

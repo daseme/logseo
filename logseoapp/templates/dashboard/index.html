@@ -100,7 +100,7 @@
                     <tr><td>phrase</td><td>date</td><td>ips</td></tr>
                     {% for item in dict.query_result|slice:":5" %}
                     <tr>
-                        <td><a href="/phrase/{{item.phrase_id}}/?end_date={{ latest_date|date:"Y-m-d" }}&start_date={{ week_ago|date:"Y-m-d" }}&client_list={{ client_id }}" style="text-decoration:none;">{{ item.phrase_id__phrase }}</a></td>
+                        <td><a href="/queries/individual-query/{{item.phrase_id}}/?end_date={{ latest_date|date:"Y-m-d" }}&start_date={{ week_ago|date:"Y-m-d" }}&client_list={{ client_id }}" style="text-decoration:none;">{{ item.phrase_id__phrase }}</a></td>
                         <td>{{ item.phrase_id__first_seen|date:"m-d-y" }}</td>
                         <td>{{ item.num_ips }}</td>
                     </tr>

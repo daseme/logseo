@@ -20,8 +20,6 @@
 
 {% endblock %}
 
-
-
 {% block primary %}
 <div class="container">
     <div class="span12">
@@ -42,6 +40,7 @@
  
 <script type="text/javascript">
 var last_date = new Date.parse('{{ last_data_date|date:"M d, Y"}}');
+
 var my_year = {{ last_data_date|date:"Y"}};
 var my_month = {{ last_data_date|date:"m"}};
 var my_day = {{ last_data_date|date:"d"}};
@@ -49,7 +48,7 @@ var my_date = new Date(my_year, my_month-1, my_day); //date.js advances one mont
 
 
 $('#reportrange').daterangepicker(
-            {
+        {        
     ranges: {
         'Last Day': [my_date, my_date],
         'Last Day - 1': [new Date(my_year, my_month-1, my_day).add({ days: -1 }), new Date(my_year, my_month-1, my_day).add({ days: -1 })],
