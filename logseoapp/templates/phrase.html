@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block header_scripts %}
-<script type="text/javascript" charset="utf-8" src="/media/d3.layout.js"></script>
-<script src="/media/nv.d3.js"></script>
+<link href="/static/css/daterangepicker.css" rel="stylesheet">
+<script type="text/javascript" charset="utf-8" src="/media/date-picker/date.js"></script>
+<script type="text/javascript" charset="utf-8" src="/media/date-picker/daterangepicker.js"></script>
 <script src="/media/models/sparkline.js"></script>
 <script src="/media/models/sparklinePlus.js"></script>
+
 <script language="javascript" type="text/javascript">
     $(document).ready(function() {
             var oTable = $('#example').dataTable( {
@@ -14,15 +16,63 @@
                 });
             } );
 
-</script>
+        </script>
+
 {% endblock %}
 
 
 
 {% block primary %}
 <div class="container">
-<div class="span12">
-    {% include "date_form.html" %}
+    <div class="span12">
+        <div class="page-header">
+            <form method="get" class="form-inline">
+                {% csrf_token %}
+                <input type="hidden" name="start_date" value="" id="start" />
+                <input type="hidden" name="end_date" value="" id="end" />
+                <input type="submit" value="apply" class="pull-right">
+            </form>
+            <div id="reportrange" class="pull-right">
+                
+                <i class="icon-calendar icon-large"></i>
+                <span>{{ start_date }} - {{ end_date }}</span> <b class="caret"></b>
+            </div>
+
+
+ 
+<script type="text/javascript">
+var last_date = new Date.parse('{{ last_data_date|date:"M d, Y"}}');
+var my_year = {{ last_data_date|date:"Y"}};
+var my_month = {{ last_data_date|date:"m"}};
+var my_day = {{ last_data_date|date:"d"}};
+var my_date = new Date(my_year, my_month-1, my_day); //date.js advances one month???
+
+
+$('#reportrange').daterangepicker(
+            {
+    ranges: {
+        'Last Day': [my_date, my_date],
+        'Last Day - 1': [new Date(my_year, my_month-1, my_day).add({ days: -1 }), new Date(my_year, my_month-1, my_day).add({ days: -1 })],
+        'Last 7 Days': [new Date(my_year, my_month-1, my_day).add({ days: -6 }), my_date],
+        'Last 30 Days': [new Date(my_year, my_month-1, my_day).add({ days: -29 }), my_date],
+        'This Month': [new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth(), new Date(my_year, my_month-1, my_day).moveToLastDayOfMonth()],
+        'Last Month': [new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth().add({ months: -1 }), new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth().add({ days: -1 })]
+        }
+    },
+    function(start, end) {
+    //$('#date_form').val(start);
+    $('#reportrange span').html(start.toString('MMMM d, yyyy') + ' - ' + end.toString('MMMM d, yyyy'));
+    $('#start').val(start.toString('yyyy-MM-dd'));
+    $('#end').val(end.toString('yyyy-MM-dd'));
+    
+    
+    } 
+    
+);
+</script>
+            <h1>{{ client.0.name|upper }}</h1>
+        </div>
+
     <div class="row">
         <div class="span12">
             <br><br>
@@ -44,10 +94,14 @@
                             {% endfor %}
                         </span>
                     </td>
-                    <tr><td>nvd3</td><td>
-                            <div> <svg id="chart1" class="sparkline"></svg></div>
+                    <td>
+
+                            {% for dict in rankings %}
+                            {{ dict.position }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+
                     </td>
-                </tr>
+
             </table>
 
             <h2>Pages accessed by this search term</h2>
@@ -62,14 +116,21 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for page_id__page in rank_list %}
+                    {% for page in rank_list %}
                     <tr>
                         <td>
-                            {{ page_id__page.grouper }}
+                            <a href="/landing_pages/page/{{ page.list.0.page_id }}">{{ page.grouper }}</a>
                         </td>
                         <td>
                             <span class="inlinesparkline" style="width:40px;">
-                                {% for item in page_id__page.list %}
+                                {% for item in page.list %}
+                                -{{ item.position }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+
+                        </td>
+                        <td>
+
+                                {% for item in page.list %}
                                 -{{ item.position }}{% if not forloop.last %}, {% endif %}
                                 {% endfor %}
 
@@ -81,32 +142,4 @@
                 {% endblock %}
             </div>
             
- 
-
-                                       
-<script>
-//Format A
-nv.addGraph({
-  generate: function() {
-    var chart = nv.models.sparklinePlus()
-                  .width(400)
-                  .height(50)
-
-    d3.select("#chart1")
-    .datum({{ rankings|safe }} )
-      .call(chart);
-
-    return chart;
-  },
-  callback: function(graph) {
-    log("Sparkline rendered");
-  }
-});
-
-
-
-
-
-
-</script>
             {% endblock %}

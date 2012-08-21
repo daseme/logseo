@@ -1,6 +1,7 @@
 from __future__ import division
 from utils.view import *
 from django.shortcuts import render
+#from django.template import RequestContext
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from logseoapp.forms import ClientChoice
 from django.db.models import Avg, Count, StdDev
@@ -11,8 +12,6 @@ from operator import itemgetter
 def home(request, client_id=""):
     """ retrieve stats for home page,
     restricted to last full week (mon-sun) in our data-set """
-
-
 
     # client from form
     client_id = client_select(request.GET)
@@ -83,6 +82,7 @@ def home(request, client_id=""):
     return render(request,'dashboard/index.html', {
                                           'sql':sql,
                                           'form':form,
+                                          'client_id':client_id,
                                           'metrics_row1_dict':metrics_row1_dict,
                                           'metrics_row2_dict':metrics_row2_dict,
                                           'client':client,
@@ -101,18 +101,34 @@ def home(request, client_id=""):
 def get_ranks(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
 
-    form = ClientChoice()
 
-    start_date,end_date = date_select(request.GET)
+
+    """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
+
+    form = ClientChoice(initial={'client_list': client_id})
+
+    # client name
+    client = Client.objects.values('name').filter(pk=client_id)
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
     dates    = LogSeRank.objects.values('refdate').distinct()
 
+
+    """
+    unique view code
+    """
     """
     datatable data
     """
     ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
                                  filter(   position__gt = 0,
                                            engine_id__engine__contains = 'Google',
-                                           refdate__range=(start_date, end_date)). \
+                                           refdate__range=(start_date, end_date),
+                                           client_id=client_id). \
                                  annotate( num_ips=Count('ip', distinct = True),
                                            num_rank=Count('position'),
                                            avg_rank=Avg('position'),
@@ -129,12 +145,17 @@ def get_ranks(request=None, start_date="", end_date=""):
     """
     chart / time series data
     """
-    all_phrase    = LogSeRank.objects.values('id','phrase_id','refdate').distinct()
+    all_phrase    = LogSeRank.objects.values('id','phrase_id','refdate'). \
+                                      filter(client_id=client_id).distinct()
 
-    rank_phrase   = LogSeRank.objects.values('phrase_id','refdate').filter(position__gt = 0).distinct()
+    rank_phrase   = LogSeRank.objects.values('phrase_id','refdate'). \
+                                      filter(position__gt = 0,
+                                             client_id=client_id).distinct()
 
     ranks_ts  = LogSeRank.objects.values('position','refdate'). \
-                                  filter(position__gt = 0, refdate__range=[start_date,end_date])
+                                  filter(position__gt = 0,
+                                         refdate__range=[start_date,end_date],
+                                         client_id=client_id)
 
     avg_position = process_time_series(ranks_ts,start_date,end_date,'refdate',Avg('position'))
 
@@ -150,6 +171,8 @@ def get_ranks(request=None, start_date="", end_date=""):
 
     return render(request,'ranks.html', { 'sql':sql,
                                           'form':form,
+                                          'client':client,
+                                          'client_id':client_id,
                                           'phrase_ip':phrase_ip,
                                           'start_date':start_date,
                                           'end_date':end_date,
@@ -160,28 +183,40 @@ def get_ranks(request=None, start_date="", end_date=""):
                                           'avg_position':avg_position})
 
 def get_phrase(request, phrase):
-    """ get data on a particular kw query
+    """ get data on a particular kw query """
+
 
     """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
 
-    start_date,end_date = date_select(request.GET)
+    form = ClientChoice(initial={'client_list':client_id})
+
+    # client name
+    client = Client.objects.values('name').filter(pk=client_id)
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
     dates    = LogSeRank.objects.values('refdate').distinct()
 
-
+    """
+    unique view code
+    """
     phrase_name = Kw.objects.values('id','phrase').filter(pk = phrase)
 
-    ranking_ts    = LogSeRank.objects.values('position', 'refdate'). \
+    rankings    = LogSeRank.objects.values('position'). \
                                     filter(position__gt = 0,
                                            phrase_id = phrase,
-                                           refdate__range=(start_date, end_date)). \
+                                           refdate__range=[start_date, end_date]). \
                                     order_by('refdate')
-    rankings   = process_time_series(ranking_ts,start_date,end_date,'refdate',Avg('position'))
 
-    pages       = LogSeRank.objects.values('page_id__page', 'position', 'refdate'). \
+    #rankings   = process_time_series(ranking_ts,start_date,end_date)
+
+    pages       = LogSeRank.objects.values('page_id','page_id__page', 'position', 'refdate'). \
                                     filter(position__gt = 0,
                                            phrase_id = phrase,
                                            refdate__range=(start_date, end_date)). \
-                                    distinct(). \
                                     order_by('page_id__page','refdate')
 
     #debug lines
@@ -191,6 +226,10 @@ def get_phrase(request, phrase):
     return render(request,'phrase.html', { 'dates':dates,
                                            'start_date':start_date,
                                            'end_date':end_date,
+                                           'last_data_date':last_data_date,
+                                           'form':form,
+                                           'client':client,
+                                           'client_id':client_id,
                                            'phrase_name':phrase_name,
                                            'rankings':rankings,
                                            'pages':pages})
@@ -200,7 +239,25 @@ def get_phrase(request, phrase):
 def get_landing_pages(request, start_date="", end_date=""):
     """ get landing pages data """
 
-    start_date,end_date = date_select(request.GET)
+
+    """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
+
+    form = ClientChoice(initial={'client_list':client_id})
+
+    # client name
+    client = Client.objects.values('name').filter(pk=client_id)
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
+    dates    = LogSeRank.objects.values('refdate').distinct()
+
+
+    """
+    unique view code
+    """
 
     dates         = LogSeRank.objects.values('refdate').distinct()
 
@@ -245,16 +302,34 @@ def get_landing_pages(request, start_date="", end_date=""):
     return render(request,'landing_pages.html', { 'sql':sql,
                                                   'start_date':start_date,
                                                   'end_date':end_date,
+                                                  'last_data_date':last_data_date,
                                                   'dates':dates,
+                                                  'form':form,
+                                                  'client':client,
                                                   'combo':combo,
                                                   't_series':t_series})
 
 def get_page(request, page):
     """ get specific page data """
 
-    start_date,end_date = date_select(request.GET)
+    """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
 
-    dates     = LogSeRank.objects.values('refdate').distinct()
+    form = ClientChoice(initial={'client_list':client_id})
+
+    # client name
+    client = Client.objects.values('name').filter(pk=client_id)
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
+    dates    = LogSeRank.objects.values('refdate').distinct()
+
+
+    """
+    unique view code
+    """
 
     page_name = Page.objects.values('id','page').filter(pk = page)
 
@@ -293,6 +368,9 @@ def get_page(request, page):
                                           'dates':dates,
                                           'start_date':start_date,
                                           'end_date':end_date,
+                                          'last_data_date':last_data_date,
+                                          'form':form,
+                                          'client':client,
                                           'page_name':page_name,
                                           'kws':combo,
                                           'rankings':rankings})

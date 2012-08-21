@@ -1,5 +1,5 @@
 # Django settings for logseo project.
-
+from django.conf import global_settings
 import os
 ROOT_PATH = os.path.dirname(__file__)
 
@@ -124,21 +124,21 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 )
-TEMPLATE_CONTEXT_PROCESSORS = ( #ko added
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
 
     'django.core.context_processors.request',
 
-    'django.core.context_processors.debug',
+    #'django.core.context_processors.debug',
 
-    'django.core.context_processors.i18n',
+    #'django.core.context_processors.i18n',
 
-    'django.core.context_processors.media',
+    #'django.core.context_processors.media',
 
-    'django.core.context_processors.static',
+    #'django.core.context_processors.static',
 
-    'django.contrib.auth.context_processors.auth',
+    #'django.contrib.auth.context_processors.auth',
 
-    'django.contrib.messages.context_processors.messages',
+    #'django.contrib.messages.context_processors.messages',
 
 )
 INSTALLED_APPS = (

@@ -69,21 +69,21 @@
             <a class="brand" href="/">LOGseO</a>    
              <div class="nav-collapse">
                 <ul class="nav">      
-                    <li {% if request.path == '/' %} class="active"{% endif %}><a href="/">Home</a></li>
+                    <li {% if request.path = '/' %} class="active"{% endif %}><a href="/">Home</a></li>
                     <li {% if request.path = '/queries/' %} class="active"{% endif %}><a href="/queries/">Queries</a></li>
                     <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/ranks/">Ranked Queries</a></li>
                     <li {% if request.path == '/landing_pages/' %} class="active"{% endif %}><a href="/landing_pages/">Landing Pages</a></li>   
-                    <li {% if request.path == '/watch_list/' %} class="active"{% endif %}><a href="/watch_list/">Watch List</a></li> 
+                    <li {% if request.path = '/watch_list/' %} class="active"{% endif %}><a href="/watch_list/">Watch List</a></li> 
                 </ul>
             </div><!--/.nav-collapse -->
            
             <form method='get' class="form-inline">
                  <button type="submit" class="btn pull-right">switch</button>
                         {% csrf_token %}
-                        {{ form.client_list }}
-                       
-
-                    </form>
+                        {{ form.client_list }}            
+                        <input type="hidden" name="start_date" value="{{ start_date|date:"Y-m-d" }}" />
+                        <input type="hidden" name="end_date" value="{{ end_date|date:"Y-m-d" }}" />
+            </form>
            
                           
         </div>

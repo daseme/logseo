@@ -7,18 +7,24 @@ import time
 import qsstats
 
 
-def date_select(get_request):
-    """ defaults to last month in our db, or uses date select forms """
+def date_select(get_request,client_id):
+    """ defaults to last month available for a client, or uses date select forms """
+
+    last_data_date = LogSeRank.objects.values('refdate'). \
+                                     filter(client_id=client_id). \
+                                     order_by('-refdate')[0]
+    last_data_date = last_data_date['refdate'] # possible we don't have a full month here
 
     if 'start_date' and 'end_date' in get_request:
         start_date =  datetime.strptime(get_request['start_date'], '%Y-%m-%d').date()
         end_date   =  datetime.strptime(get_request['end_date'], '%Y-%m-%d').date()
-        return start_date,end_date
+        return start_date,end_date,last_data_date
+
     else:
-        end_date = LogSeRank.objects.values('refdate').order_by('-refdate')[0]
-        end_date = end_date['refdate'] # possible we don't have a full month here
-        start_date = end_date.replace(day=01) # replace day part of end_date with 01
-        return start_date,end_date
+        end_date = last_data_date
+        start_date = last_data_date.replace(day=01) # replace day part of end_date with 01
+        return start_date,end_date,last_data_date
+
 
 def client_select(get_request):
     """ defaults to client_id = 1, or uses client select form """

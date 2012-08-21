@@ -1,4 +1,4 @@
-<form method="GET">
+<form method="GET" class="form-inline">
     <select name="start_date">
         {% for date in dates %}
         <option value="{{ date.refdate|date:"Y-m-d" }}" {% if start_date =  date.refdate %} selected {% endif %}>{{ date.refdate }}</option>
@@ -19,6 +19,7 @@
         <button type="button" value="1" class="btn active" data-toggle="button">week</button>
         <button type="button" value="1" class="btn" data-toggle="button">month</button>
         <input type="hidden" name="is_private" value="0" />
+        <input type="hidden" name="client_list" value="{{ client_id }}" />
         <input type="submit" name="submit" class="submit" value="filter dates" />
     </span>
 
