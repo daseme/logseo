@@ -301,7 +301,8 @@ def get_phrase(request, phrase):
                                            client_id=client_id). \
                                     annotate(num_ips=Count('ip', distinct = True)). \
                                     order_by('refdate')
-    ip_chart    = [{"key":"IP","color":"#E9967A","values":process_time_series(ip_ts,start_date,end_date)}]
+    ip_chart    = process_time_series(ip_ts,start_date,end_date)
+    #ip_chart    = [{"key":"IP","color":"#E9967A","values":process_time_series(ip_ts,start_date,end_date)}]
     ip_chart    = json.dumps(ip_chart, sort_keys=True)
 
     #ip_chart    = process_time_series(ip_ts,start_date,end_date)

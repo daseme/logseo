@@ -131,7 +131,7 @@ nv.addGraph(function() {
 
  
    d3.select('#chart svg')
-   .datum({{ ip_chart|safe }})
+   .datum(data())
      .transition().duration(500)
        .call(chart);
  
@@ -139,6 +139,18 @@ nv.addGraph(function() {
  
    return chart;
  });
+
+ document.write(data());
+function data() {
+    var data = {{ ip_chart|safe }};
+
+  return [
+    {
+      values: data,
+      key: "Visitors",
+      color: "#E9967A"
+    } ];
+}
 
 </script>
             {{ ip_chart }} 
