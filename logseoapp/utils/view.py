@@ -58,7 +58,7 @@ def process_time_series(query, start_date, end_date, date_field="refdate", agg_f
     time_series = qss.time_series(start_date, end_date, agg_interval) # aggregate by weeks (default is days)
 
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
-    return [ {"x":time.mktime(e[0].timetuple()), "y":e[1]} for e in time_series ]
+    return [ {"x":time.mktime(e[0].timetuple())*1000, "y":e[1]} for e in time_series ]
 
 def bigram_stats(query):
     """ return ip-weighted bigram scores for this week last week

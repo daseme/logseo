@@ -8,6 +8,7 @@ from django.db.models import Avg, Count, StdDev
 from django.db import connection
 from collections import defaultdict
 from operator import itemgetter
+import json
 
 def home(request, client_id=""):
     """ retrieve stats for home page,
@@ -294,11 +295,19 @@ def get_phrase(request, phrase):
                                            refdate__range=[start_date, end_date]). \
                                     order_by('refdate')
 
-    #rankings   = process_time_series(ranking_ts,start_date,end_date)
+    ip_ts       = LogSeRank.objects.values('refdate'). \
+                                    filter(refdate__range=[start_date, end_date],
+                                           phrase_id = phrase,
+                                           client_id=client_id). \
+                                    annotate(num_ips=Count('ip', distinct = True)). \
+                                    order_by('refdate')
+    ip_chart    = [{"key":"IP","color":"#E9967A","values":process_time_series(ip_ts,start_date,end_date)}]
+    ip_chart    = json.dumps(ip_chart, sort_keys=True)
+
+    #ip_chart    = process_time_series(ip_ts,start_date,end_date)
 
     pages       = LogSeRank.objects.values('page_id','page_id__page', 'position', 'refdate'). \
-                                    filter(position__gt = 0,
-                                           phrase_id = phrase,
+                                    filter(phrase_id = phrase,
                                            refdate__range=(start_date, end_date)). \
                                     order_by('page_id__page','refdate')
 
@@ -311,6 +320,7 @@ def get_phrase(request, phrase):
                                            'end_date':end_date,
                                            'last_data_date':last_data_date,
                                            'form':form,
+                                           'ip_chart':ip_chart,
                                            'client':client,
                                            'client_id':client_id,
                                            'phrase_name':phrase_name,

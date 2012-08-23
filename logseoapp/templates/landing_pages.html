@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% block header_scripts %}
-
+<link href="/static/css/daterangepicker.css" rel="stylesheet">
+<script type="text/javascript" charset="utf-8" src="/media/date-picker/date.js"></script>
+<script type="text/javascript" charset="utf-8" src="/media/date-picker/daterangepicker.js"></script>
 <script language="javascript" type="text/javascript">
 /* Default class modification */
 $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -138,9 +140,9 @@ $(document).ready(function() {
 <div class="container">
     <div class="span12">
         <div class="page-header">
+            {% include 'dateform.html' %}
             <h1>{{ client.0.name|upper }}</h1>
         </div>
-    {% include "date_form.html" %}
     <div class="row">
         <div class="span12">
             <div id="chart_container">
