@@ -427,9 +427,24 @@ def get_page(request, page):
 
     page_name = Page.objects.values('id','page').filter(pk = page)
 
-    rankings  = LogSeRank.objects.values('position', 'refdate'). \
-                                    filter(page_id = page, position__gt = 0,refdate__range=(start_date, end_date)). \
+    rank_ts  = LogSeRank.objects.values('position','refdate'). \
+                                    filter(page_id = page, position__gt = 0,refdate__range=[start_date, end_date]). \
                                     order_by('refdate')
+
+    rankings_chart = process_time_series(rank_ts,start_date,end_date,'refdate',Avg('position'))
+    #rankings_chart    = [{"key":"Rank","color":"#dddddd","values":process_time_series(rankings,start_date,end_date)}]
+
+    ip_ts       = LogSeRank.objects.values('refdate'). \
+                                    filter(refdate__range=[start_date, end_date],
+                                           page_id = page,
+                                           client_id=client_id). \
+                                    annotate(num_ips=Count('ip', distinct = True)). \
+                                    order_by('refdate')
+    ip_chart    = process_time_series(ip_ts,start_date,end_date)
+    #ip_chart    = [{"key":"IP","color":"#E9967A","values":process_time_series(ip_ts,start_date,end_date)}]
+    ip_chart    = json.dumps(ip_chart, sort_keys=True)
+
+
 
     kws       = LogSeRank.objects.values('phrase_id','phrase_id__phrase'). \
                                     filter(page_id = page, refdate__range=(start_date, end_date)). \
@@ -465,9 +480,10 @@ def get_page(request, page):
                                           'last_data_date':last_data_date,
                                           'form':form,
                                           'client':client,
+                                          'ip_chart':ip_chart,
+                                          'rankings_chart':rankings_chart,
                                           'page_name':page_name,
-                                          'kws':combo,
-                                          'rankings':rankings})
+                                          'kws':combo})
 
 def get_watchlist(request):
     """ get/create watchlist """

@@ -49,13 +49,13 @@ def last_full_week(client_id):
     return latest_sunday,week_ago
 
 
-def process_time_series(query, start_date, end_date, date_field="refdate", agg_field="", agg_interval="weeks"):
+def process_time_series(query, start_date, end_date, date_field="refdate", agg_field="", agg_interval="days"):
     """ process qsstats object into json
 
     """
 
     qss = qsstats.QuerySetStats(query, date_field, agg_field)
-    time_series = qss.time_series(start_date, end_date, agg_interval) # aggregate by weeks (default is days)
+    time_series = qss.time_series(start_date, end_date, agg_interval) # e.g., days,weeks (default is days)
 
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     return [ {"x":time.mktime(e[0].timetuple())*1000, "y":e[1]} for e in time_series ]
