@@ -289,6 +289,12 @@ def get_phrase(request, phrase):
     """
     phrase_name = Kw.objects.values('id','phrase').filter(pk = phrase)
 
+    rank_ts  = LogSeRank.objects.values('position','refdate'). \
+                                    filter(phrase_id = phrase, position__gt = 0,refdate__range=[start_date, end_date]). \
+                                    order_by('refdate')
+
+    rankings_chart = process_time_series(rank_ts,start_date,end_date,'refdate',Avg('position'))
+
     rankings    = LogSeRank.objects.values('position'). \
                                     filter(position__gt = 0,
                                            phrase_id = phrase,
@@ -326,6 +332,7 @@ def get_phrase(request, phrase):
                                            'client_id':client_id,
                                            'phrase_name':phrase_name,
                                            'rankings':rankings,
+                                           'rankings_chart':rankings_chart,
                                            'pages':pages})
 
 
@@ -356,7 +363,7 @@ def get_landing_pages(request, start_date="", end_date=""):
     dates         = LogSeRank.objects.values('refdate').distinct()
 
     landing_pages = LogSeRank.objects.values('page_id', 'page_id__page'). \
-                                      filter(refdate__range=(start_date, end_date)). \
+                                      filter(refdate__range=[start_date, end_date]). \
                                       distinct()
 
     gcount        = landing_pages.filter(engine_id__engine__contains = 'Google'). \
@@ -389,6 +396,7 @@ def get_landing_pages(request, start_date="", end_date=""):
     """
 
     t_series = process_time_series(landing_pages,start_date,end_date)
+    t_series = json.dumps(t_series, sort_keys=True)
 
     #debug lines
     sql = connection.queries

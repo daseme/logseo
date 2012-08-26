@@ -14,11 +14,24 @@
     #{{ dict.metric_name|cut:" " }}{% if not forloop.last %},{% endif %}{% endfor %} {
         position: relative;
         left: 80px;
+        height:60px;
     }
     {% for dict in metrics_row2_dict %}
     #{{ dict.metric_name|cut:" " }}{% if not forloop.last %},{% endif %}{% endfor %} {
         position: relative;
         left: 80px;
+        height:60px;
+    }
+
+    {% for dict in metrics_row1_dict %}
+    #legend{{ dict.metric_name|cut:" " }}{% if not forloop.last %},{% endif %}{% endfor %} {
+        position: relative;
+        left: 20px;
+        top:-25px;
+    }
+    .rickshaw_graph .detail {
+        height:50px;
+ 
     }
     #number {
         position: relative;
@@ -71,7 +84,9 @@
                             <div id="number">{{ dict.query_cnt }}</div>
                             <div id="diff" class='{% if dict.diff < 1 %} negative {% else %}positive{% endif %}'>{{ dict.diff }}</div>
                             <div id="{{ dict.metric_name|cut:" " }}"></div>
+                           
                         </div>
+                        <div id="legend{{ dict.metric_name|cut:" " }}"></div>
                     </div>
                 </div>
             </div><!--/span-->
@@ -93,6 +108,7 @@
                         <div id="chart_container">
                             <div id="number">{{ dict.query_cnt }}</div>
                             <div id="{{ dict.metric_name|cut:" " }}"></div>
+                            <div id="legend{{ dict.metric_name|cut:" " }}"></div>
                         </div>
                     </div>
                 </div>
@@ -189,15 +205,59 @@
     } );
 
     graph.render();
+    
     var hoverDetail = new Rickshaw.Graph.HoverDetail( {
         graph: graph,
         formatter: function(series, x, y) {
-            var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
+            var date = '<span class="date">' + new Date(x).toUTCString() + '</span>';
             var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
-            var content = swatch + "new kw count" + ": " + parseInt(y) + '<br>' + date;
+            var content = swatch + "{{ dict.metric_name }}" + ": " + parseInt(y) + '<br>' + date;
             return content;
         }
     } );
+/*
+var legend{{ dict.metric_name|cut:" " }} = document.querySelector('#legend{{ dict.metric_name|cut:" " }}');
+var Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
+
+	render: function(args) {
+
+		legend{{ dict.metric_name|cut:" " }}.innerHTML = args.formattedXValue;
+
+		args.detail.sort(function(a, b) { return a.order - b.order }).forEach( function(d) {
+
+			var line = document.createElement('div');
+			line.className = 'line';
+
+			var swatch = document.createElement('div');
+			swatch.className = 'swatch';
+			swatch.style.backgroundColor = d.series.color;
+
+			var label = document.createElement('div');
+			label.className = 'label';
+			label.innerHTML = d.name + ": " + d.formattedYValue;
+
+			line.appendChild(swatch);
+			line.appendChild(label);
+
+			legend{{ dict.metric_name|cut:" " }}.appendChild(line);
+
+			var dot = document.createElement('div');
+			dot.className = 'dot';
+			dot.style.top = graph.y(d.value.y0 + d.value.y) + 'px';
+			dot.style.borderColor = d.series.color;
+
+			this.element.appendChild(dot);
+
+			dot.className = 'dot active';
+
+			this.show();
+
+		}, this );
+        }
+});
+
+var hover = new Hover( { graph: graph } ); 
+*/
     {% endfor %}
 
     {% for dict in metrics_row2_dict %}
@@ -214,15 +274,59 @@
     } );
 
     graph.render();
+
     var hoverDetail = new Rickshaw.Graph.HoverDetail( {
         graph: graph,
         formatter: function(series, x, y) {
-            var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
+            var date = '<span class="date">' + new Date(x).toUTCString() + '</span>';
             var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
-            var content = swatch + "new kw count" + ": " + parseInt(y) + '<br>' + date;
+            var content = swatch + "{{ dict.metric_name }}" + ": " + parseInt(y) + '<br>' + date;
             return content;
         }
     } );
+    /*
+var legend = document.querySelector('#legend{{ dict.metric_name|cut:" " }}');
+var Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
+
+	render: function(args) {
+
+		legend.innerHTML = args.formattedXValue;
+
+		args.detail.sort(function(a, b) { return a.order - b.order }).forEach( function(d) {
+
+			var line = document.createElement('div');
+			line.className = 'line';
+
+			var swatch = document.createElement('div');
+			swatch.className = 'swatch';
+			swatch.style.backgroundColor = d.series.color;
+
+			var label = document.createElement('div');
+			label.className = 'label';
+			label.innerHTML = d.name + ": " + d.formattedYValue;
+
+			line.appendChild(swatch);
+			line.appendChild(label);
+
+			legend.appendChild(line);
+
+			var dot = document.createElement('div');
+			dot.className = 'dot';
+			dot.style.top = graph.y(d.value.y0 + d.value.y) + 'px';
+			dot.style.borderColor = d.series.color;
+
+			this.element.appendChild(dot);
+
+			dot.className = 'dot active';
+
+			this.show();
+
+		}, this );
+        }
+});
+
+var hover = new Hover( { graph: graph } ); 
+*/
     {% endfor %}
 </script>
 

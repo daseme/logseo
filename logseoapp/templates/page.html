@@ -221,22 +221,17 @@ nv.addGraph(function() {
     });
     chart.xAxis.tickPadding([12]) //add head space to x-axis labels
 	  
-    chart.y1Axis
-    .tickFormat(d3.format(',.2f'));
-    //.forceY([0]);
+    chart.y1Axis.tickFormat(d3.format(',.2f'));
+
     //chart.yAxis.tickPadding([15]);
-    //chart.bar.forceY([0]); // need this back working
 
+    //my_y = d3.scale.linear().domain([y_max + 5, 1]).range([h, 0]);
     //y2 = d3.scale.linear().range([0, h]);
-    chart.y2Axis
-    .tickFormat(d3.format(',.2f'));
-    //y2Axis = d3.svg.axis().scale(y2);
-    //chart.bar.forceY([0]);
+    chart.y2Axis.tickFormat(d3.format(',.2f'));
+    //y_max = 9.5;
+    //chart.y2Axis
+    //.domain([y_max + 5, 1]); // note rebind for yDomain
 
-    //var y2 = d3.scale.linear().domain([0,100]).range([450,150]);//invert axis???
-    var y2 = d3.scale.linear().domain([0,100]).range([450,150]);
-    console.log( y2(0), y2(50), y2(100) );
-    //console.log( y2(0), y2(50), y2(100) );
 
 
 
@@ -245,6 +240,7 @@ nv.addGraph(function() {
     .transition().duration(500)
     .call(chart);
 
+    chart.bars.forceY([0]);
     nv.utils.windowResize(chart.update);
  
     return chart;
@@ -263,7 +259,7 @@ function data() {
   {
       "values": {{ rankings_chart|safe }},
       "key": "Avg Rank",
-      "color": "#dddddd"
+      "color": "#ADB7AB"
   }
   
   

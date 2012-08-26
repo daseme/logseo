@@ -4,8 +4,7 @@
 <link href="/static/css/nv.d3.css" rel="stylesheet">
 <script type="text/javascript" charset="utf-8" src="/media/date-picker/date.js"></script>
 <script type="text/javascript" charset="utf-8" src="/media/date-picker/daterangepicker.js"></script>
-<script src="/media/models/sparkline.js"></script>
-<script src="/media/models/sparklinePlus.js"></script>
+
 <style>
     svg {
   display: block;
@@ -151,27 +150,24 @@ $(document).ready(function() {
             {% for dict in phrase_name %}
             <h2>Search Query - <em><span style="color:#948C75;">{{ dict.phrase }}</span></em></h2>
             {% endfor %}
-<div id="chart"><svg style="height: 200px;"></svg></div>
+            <div id="chart"><svg style="height: 200px;"></svg></div>
             <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered">
-                <tr>{% for dict in phrase_name %}
-                    <td>{{ dict.phrase }}</td>
-                    {% endfor %}
-                    <td>
-                        <span class="inlinesparkline" style="width:40px;">
-                            {% for dict in rankings %}
-                            -{{ dict.position }}{% if not forloop.last %}, {% endif %}
-                            {% endfor %}
-                        </span>
-                    </td>
-                    <td>
-
-                            {% for dict in rankings %}
-                            {{ dict.position }}{% if not forloop.last %}, {% endif %}
-                            {% endfor %}
-
-                    </td>
-
-                </table>
+                <thead>
+                    <tr>
+                        <th>search query</th>
+                        <th>first found</th>
+                        <th>last accessed</th>
+                        <th>rank (first,last,min,max)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ phrase_name.0.phrase }}</td>
+                        <td>na</td>
+                        <td>na</td>
+                        <td>na</td>
+                    </tr>
+            </table>
         </div><!--/span-->
     </div>
         <div class="row">
@@ -230,10 +226,10 @@ $(document).ready(function() {
             </div>
 
             
-            <script>
+<script>
 nv.addGraph(function() {
     
-    var chart = nv.models.lineChart();
+    var chart = nv.models.linePlusBarChart();
 
     chart.xAxis
     .tickFormat(function(d) {
@@ -241,30 +237,38 @@ nv.addGraph(function() {
     });
     chart.xAxis.tickPadding([12]) //add head space to x-axis labels
 	  
-    chart.yAxis
-    .tickFormat(d3.format(',.2f'));
-    //chart.yAxis.tickPadding([15]);
-    chart.forceY([0]);
+    chart.y1Axis.tickFormat(d3.format(',.2f'));
+
+    chart.y2Axis.tickFormat(d3.format(',.2f'));
 
     d3.select('#chart svg')
     .datum(data())
     .transition().duration(500)
     .call(chart);
- 
+
+    chart.bars.forceY([0]);
     nv.utils.windowResize(chart.update);
  
     return chart;
  });
 
 function data() {
-    var data = {{ ip_chart|safe }};
 
     return [
     {
-      values: data,
-      key: "Visitors",
-      color: "#E9967A"
-    } ];
+      "values": {{ ip_chart|safe }},
+      "key": "Visitors",
+      "color": "#E9967A",
+      "bar": true
+  },
+  {
+      "values": {{ rankings_chart|safe }},
+      "key": "Avg Rank",
+      "color": "#ADB7AB"
+  }
+  
+  
+  ];
     }
 
 </script>
