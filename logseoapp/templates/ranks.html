@@ -238,13 +238,13 @@ function data() {
 
     return [
     {
-      "values": {{ rank_phrase|safe }},
+      "values": {{ rankphrase_chart|safe }},
       "key": "Ranked Queries",
       "color": "#E9967A",
       "bar": true
   },
   {
-      "values": {{ avg_position|safe }},
+      "values": {{ position_chart|safe }},
       "key": "Avg Rank",
       "color": "#ADB7AB"
   }

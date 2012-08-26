@@ -147,19 +147,14 @@ def get_queries(request=None, start_date="", end_date=""):
     all_phrase    = LogSeRank.objects.values('id','phrase_id','refdate'). \
                                       filter(client_id=client_id).distinct()
 
-    rank_phrase   = LogSeRank.objects.values('phrase_id','refdate'). \
-                                      filter(client_id=client_id).distinct()
 
-    ranks_ts  = LogSeRank.objects.values('position','refdate'). \
-                                  filter(refdate__range=[start_date,end_date],
-                                         client_id=client_id)
 
-    avg_position = process_time_series(ranks_ts,start_date,end_date,'refdate',Avg('position'))
+
 
     # make ranks negative so lower ranks show higher on the chart
-    avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
+
     all_phrase   = process_time_series(all_phrase,start_date,end_date)
-    rank_phrase  = process_time_series(rank_phrase,start_date,end_date)
+
 
 
 
@@ -176,9 +171,7 @@ def get_queries(request=None, start_date="", end_date=""):
                                           'last_data_date':last_data_date,
                                           'ip_cnts':ip_count,
                                           'dates':dates,
-                                          'rank_phrase':rank_phrase,
-                                          'all_phrase':all_phrase,
-                                          'avg_position':avg_position})
+                                          'all_phrase':all_phrase})
 
 
 def get_ranks(request=None, start_date="", end_date=""):
@@ -235,17 +228,17 @@ def get_ranks(request=None, start_date="", end_date=""):
                                       filter(position__gt = 0,
                                              client_id=client_id).distinct()
 
-    ranks_ts  = LogSeRank.objects.values('position','refdate'). \
+    position_ts  = LogSeRank.objects.values('position','refdate'). \
                                   filter(position__gt = 0,
                                          refdate__range=[start_date,end_date],
                                          client_id=client_id)
 
-    avg_position = process_time_series(ranks_ts,start_date,end_date,'refdate',Avg('position'))
+    position_chart = process_time_series(position_ts,start_date,end_date,'refdate',Avg('position'))
 
     # make ranks negative so lower ranks show higher on the chart
-    avg_position = [ {"x":e['x'], "y":e['y']*-1} for e in avg_position ]
+    position_chart = [ {"x":e['x'], "y":e['y']*-1} for e in position_chart ]
     all_phrase   = process_time_series(all_phrase,start_date,end_date)
-    rank_phrase  = process_time_series(rank_phrase,start_date,end_date)
+    rankphrase_chart  = process_time_series(rank_phrase,start_date,end_date)
 
 
 
@@ -262,9 +255,9 @@ def get_ranks(request=None, start_date="", end_date=""):
                                           'last_data_date':last_data_date,
                                           'ip_cnts':ip_count,
                                           'dates':dates,
-                                          'rank_phrase':rank_phrase,
+                                          'rankphrase_chart':rankphrase_chart,
                                           'all_phrase':all_phrase,
-                                          'avg_position':avg_position})
+                                          'position_chart':position_chart})
 
 def get_phrase(request, phrase):
     """ get data on a particular kw query """
