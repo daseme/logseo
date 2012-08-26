@@ -442,6 +442,7 @@ def get_page(request, page):
                                     order_by('refdate')
 
     rankings_chart = process_time_series(rank_ts,start_date,end_date,'refdate',Avg('position'))
+    rankings_chart = [ {"x":e['x'], "y":e['y']*-1} for e in rankings_chart ] # negative rank hack until i can reverse y2axis
     #rankings_chart    = [{"key":"Rank","color":"#dddddd","values":process_time_series(rankings,start_date,end_date)}]
 
     ip_ts       = LogSeRank.objects.values('refdate'). \

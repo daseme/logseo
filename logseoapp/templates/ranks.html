@@ -1,8 +1,26 @@
 {% extends "base.html" %}
 {% block header_scripts %}
 <link href="/static/css/daterangepicker.css" rel="stylesheet">
+<link href="/static/css/nv.d3.css" rel="stylesheet">
 <script type="text/javascript" charset="utf-8" src="/media/date-picker/date.js"></script>
 <script type="text/javascript" charset="utf-8" src="/media/date-picker/daterangepicker.js"></script>
+<style>
+    svg {
+  display: block;
+}
+
+#chart1 svg {
+  height: 500px;
+  min-width: 100px;
+  min-height: 100px;
+/*
+  margin: 50px;
+  Minimum height and width is a good idea to prevent negative SVG dimensions...
+  For example width should be =< margin.left + margin.right + 1,
+  of course 1 pixel for the entire chart would not be very useful, BUT should not have errors
+*/
+}
+</style>
 <script language="javascript" type="text/javascript">
     /* Default class modification */
 $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -128,31 +146,6 @@ $(document).ready(function() {
 
 </script>
 
-<style>
-#Rickshaw
-#chart_container {
-        position: relative;
-        font-family: Arial, Helvetica, sans-serif;
-}
-#chart {
-        float:left;
-    }
-#avg_rank {
-        float:left;
-}
-#y_axis {
-	float: left;
-	width: 40px;
-}
-#y_axis_rank {
-	float: left;
-	width: 40px;
-}
-		.rickshaw_graph .detail .x_label { display: none }
-		.rickshaw_graph .detail .item { line-height: 1.4; padding: 0.5em }
-		.detail_swatch { float: right; display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 0 }
-		.rickshaw_graph .detail .date { color: #a0a0a0 }
-</style>
 
 {% endblock %}
 
@@ -165,21 +158,8 @@ $(document).ready(function() {
         </div>
 
     <div class="row">
-        <div class="span6">
-        <h2>Ranked/Unranked Kws per Week</h2>
-        <hr>
-            <div id="chart_container">
-                <div id="y_axis"></div>
-                <div id="chart"></div>
-            </div>
-        </div>
-        <div class="span6">
-            <h2>Avg Position per Week</h2>
-            <hr>
-                <div id="chart_container">
-                    <div id="y_axis_rank"></div>
-                    <div id="avg_rank"></div>
-                </div>
+        <div class="span12">
+            <div id="chart"><svg style="height: 200px;"></svg></div>
         </div>
     <div>
 
@@ -233,81 +213,52 @@ $(document).ready(function() {
 
 <script>
 
-var graph = new Rickshaw.Graph( {
-        element: document.querySelector("#chart"),
-        width: 400,
-        height: 200,
-        series: [{
-                name: 'rank phrase',
-                data: {{ rank_phrase|safe }},
-                color: '#E9967A'
-            },
-            {
-                name:'all phrase',
-                data: {{ all_phrase|safe }},
-                color: '#ADB7AB'
-            }
+nv.addGraph(function() {
+    
+    var chart = nv.models.linePlusBarChart();
 
-            ]
-} );
+    chart.xAxis
+    .tickFormat(function(d) {
+        return d3.time.format('%x')(new Date(d))
+    });
+    chart.xAxis.tickPadding([12]) //add head space to x-axis labels
+	  
+    chart.y1Axis.tickFormat(d3.format(',.2f'));
 
-var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
+    chart.y2Axis.tickFormat(d3.format(',.2f'));
 
-var y_axis = new Rickshaw.Graph.Axis.Y( {
-        graph: graph,
-        orientation: 'left',
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.getElementById('y_axis'),
-} );
+    d3.select('#chart svg')
+    .datum(data())
+    .transition().duration(500)
+    .call(chart);
 
-graph.render();
-var hoverDetail = new Rickshaw.Graph.HoverDetail( {
-	graph: graph,
-	formatter: function(series, x, y) {
-        var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
-		var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
-		var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
-		return content;
-	}
-} );
-</script>
-<script>
+    chart.bars.forceY([0]);
+    nv.utils.windowResize(chart.update);
+ 
+    return chart;
+ });
 
-var graph = new Rickshaw.Graph( {
-        element: document.querySelector("#avg_rank"),
-        width: 400,
-        height: 200,
-        min: 'auto',
-        renderer: 'line',
-        series: [{
-                name: 'avg rank',
-                data: {{ avg_position|safe }},
-                color: '#E9967A'
-            }
+function data() {
+
+    return [
+    {
+      "values": {{ rank_phrase|safe }},
+      "key": "Ranked Queries",
+      "color": "#E9967A",
+      "bar": true
+  },
+  {
+      "values": {{ avg_position|safe }},
+      "key": "Avg Rank",
+      "color": "#ADB7AB"
+  }
+  
+  
+  ];
+    }
 
 
-            ]
-} );
 
-var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
-
-var y_axis = new Rickshaw.Graph.Axis.Y( {
-    graph: graph,
-        orientation: 'left',
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.getElementById('y_axis_rank'),
-} );
-
-graph.render();
-var hoverDetail = new Rickshaw.Graph.HoverDetail( {
-	graph: graph,
-	formatter: function(series, x, y) {
-		var date = '<span class="date">' + new Date(x * 1000).toUTCString() + '</span>';
-		var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
-		var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
-		return content;
-	}
-} );
 </script>
 
 </div></div>
