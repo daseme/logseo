@@ -363,7 +363,8 @@ def get_landing_pages(request, start_date="", end_date=""):
     dates         = LogSeRank.objects.values('refdate').distinct()
 
     landing_pages = LogSeRank.objects.values('page_id', 'page_id__page'). \
-                                      filter(refdate__range=[start_date, end_date]). \
+                                      filter(refdate__range=[start_date, end_date],
+                                             client_id=client_id). \
                                       distinct()
 
     gcount        = landing_pages.filter(engine_id__engine__contains = 'Google'). \
@@ -408,6 +409,7 @@ def get_landing_pages(request, start_date="", end_date=""):
                                                   'dates':dates,
                                                   'form':form,
                                                   'client':client,
+                                                  'client_id':client_id,
                                                   'combo':combo,
                                                   't_series':t_series})
 

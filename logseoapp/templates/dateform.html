@@ -2,6 +2,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="start_date" value="" id="start" />
                 <input type="hidden" name="end_date" value="" id="end" />
+                <input type="hidden" name="client_list" value="{{ client_id }}" />
                 <input type="submit" value="apply" class="pull-right">
             </form>
             <div id="reportrange" class="pull-right">
