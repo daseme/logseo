@@ -121,7 +121,7 @@ def get_queries(request=None, start_date="", end_date=""):
     # client name
     client = Client.objects.values('name').filter(pk=client_id)
 
-    start_date,end_date,last_data_date = date_select(request.GET,client_id)
+    start_date,end_date,last_data_date = date_select(request.GET,client_id) # Prefer to use last full wk like dashboard, but still need last_data_date, for start
     dates    = LogSeRank.objects.values('refdate').distinct()
 
 

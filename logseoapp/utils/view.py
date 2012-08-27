@@ -21,8 +21,7 @@ def date_select(get_request,client_id):
         return start_date,end_date,last_data_date
 
     else:
-        end_date = last_data_date
-        start_date = last_data_date.replace(day=01) # replace day part of end_date with 01
+        end_date,start_date = last_full_week(client_id)
         return start_date,end_date,last_data_date
 
 
