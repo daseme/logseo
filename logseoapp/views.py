@@ -121,7 +121,7 @@ def get_queries(request=None, start_date="", end_date=""):
     # client name
     client = Client.objects.values('name').filter(pk=client_id)
 
-    start_date,end_date,last_data_date = date_select(request.GET,client_id) # Prefer to use last full wk like dashboard, but still need last_data_date, for start
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
     dates    = LogSeRank.objects.values('refdate').distinct()
 
 
@@ -290,10 +290,13 @@ def get_phrase(request, phrase):
     phrase_name = Kw.objects.values('id','phrase').filter(pk = phrase)
 
     rank_ts  = LogSeRank.objects.values('position','refdate'). \
-                                    filter(phrase_id = phrase, position__gt = 0,refdate__range=[start_date, end_date]). \
-                                    order_by('refdate')
+                                 filter(phrase_id = phrase,
+                                           position__gt = 0,
+                                           refdate__range=[start_date, end_date]). \
+                                 order_by('refdate')
 
     rankings_chart = process_time_series(rank_ts,start_date,end_date,'refdate',Avg('position'))
+    rankings_chart = [ {"x":e['x'], "y":e['y']*-1} for e in rankings_chart ]
 
     rankings    = LogSeRank.objects.values('position'). \
                                     filter(position__gt = 0,

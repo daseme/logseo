@@ -193,7 +193,7 @@ $(document).ready(function() {
              <td>placeholder</td>
 
 
-           <td style="text-align:left;"><a href="/phrase/{{dict.phrase_id}}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
+           <td style="text-align:left;"><a href="/queries/individual-query/{{dict.phrase_id}}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
            <td>G</td><td>{{dict.num_ips}}</td>
            <td>{{ dict.num_rank }}</td>
            <td>{{ dict.ratio }}</td>
@@ -209,7 +209,7 @@ $(document).ready(function() {
         </tbody>
 			</table>
 
-      
+            {{ sql }}    
 
 <script>
 

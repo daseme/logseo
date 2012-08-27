@@ -8,7 +8,8 @@ import qsstats
 
 
 def date_select(get_request,client_id):
-    """ defaults to last month available for a client, or uses date select forms """
+    """ defaults to last week available for a client using last_full_week(),
+    or uses date select forms """
 
     last_data_date = LogSeRank.objects.values('refdate'). \
                                      filter(client_id=client_id). \
@@ -57,7 +58,9 @@ def process_time_series(query, start_date, end_date, date_field="refdate", agg_f
     time_series = qss.time_series(start_date, end_date, agg_interval) # e.g., days,weeks (default is days)
 
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
-    return [ {"x":time.mktime(e[0].timetuple())*1000, "y":e[1]} for e in time_series ]
+    # note *1000 for consumption by javascript
+    # note hacky +14400 so we don't get one day off errors.  needs fixing!!
+    return [ {"x":(time.mktime(e[0].timetuple())+14400)*1000, "y":e[1]} for e in time_series ]
 
 def bigram_stats(query):
     """ return ip-weighted bigram scores for this week last week
