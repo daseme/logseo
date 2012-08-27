@@ -75,6 +75,12 @@ def home(request, client_id=""):
     bigram_gainers = sorted(bigram_diff.items(), key=itemgetter(1), reverse=True)
     bigram_losers  = sorted(bigram_diff.items(), key=itemgetter(1), reverse=False)
 
+    # landing pages
+    pages_query = LogSeRank.objects.values('page_id','page_id__page'). \
+                                    annotate(num_ips=Count('ip', distinct = True)). \
+                                    filter(client_id=client_id). \
+                                    order_by('-num_ips').distinct()
+
 
     #debug lines
     sql             = connection.queries
@@ -96,7 +102,8 @@ def home(request, client_id=""):
                                           'wk_bf_last_cnt':wk_bf_last_cnt,
                                           'unique_cnt':unique_cnt,
                                           'bigram_gainers':bigram_gainers,
-                                          'bigram_losers':bigram_losers })
+                                          'bigram_losers':bigram_losers,
+                                          'pages_query':pages_query})
 
 def get_queries(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
