@@ -1,4 +1,5 @@
 from __future__ import division
+from django.contrib.auth.decorators import login_required
 from utils.view import *
 from django.shortcuts import render
 #from django.template import RequestContext
@@ -10,6 +11,7 @@ from collections import defaultdict
 from operator import itemgetter
 import json
 
+@login_required
 def home(request, client_id=""):
     """ retrieve stats for home page,
     restricted to last full week (mon-sun) in our data-set """
@@ -207,23 +209,25 @@ def get_ranks(request=None, start_date="", end_date=""):
     """
     datatable data
     """
+
+    # retrieves all search queries and visitors for which we have a rank in the given time-frame
+    # does not retrieve a count of all visitors who have come through the search query during the time-frame
     ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
                                  filter(   position__gt = 0,
-                                           engine_id__engine__contains = 'Google',
-                                           refdate__range=(start_date, end_date),
+                                           refdate__range=[start_date, end_date],
                                            client_id=client_id). \
                                  annotate( num_ips=Count('ip', distinct = True),
                                            num_rank=Count('position'),
                                            avg_rank=Avg('position'),
                                            st_rank = StdDev('position')). \
-                                 order_by('phrase_id__phrase') # FUCKING WORKS
+                                 order_by('phrase_id__phrase')
 
 
     for dict in ip_count:
         num_ratio = dict['num_rank'] / dict['num_ips']
         dict['ratio'] = round(num_ratio, 2)
 
-    phrase_ip   = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
+
 
     """
     chart / time series data
@@ -256,7 +260,6 @@ def get_ranks(request=None, start_date="", end_date=""):
                                           'form':form,
                                           'client':client,
                                           'client_id':client_id,
-                                          'phrase_ip':phrase_ip,
                                           'start_date':start_date,
                                           'end_date':end_date,
                                           'last_data_date':last_data_date,
@@ -322,10 +325,10 @@ def get_phrase(request, phrase):
                                     order_by('page_id__page','refdate')
 
     #debug lines
-    #sql = connection.queries
+    sql = connection.queries
 
 
-    return render(request,'phrase.html', { 'dates':dates,
+    return render(request,'phrase.html', { 'sql':sql,'dates':dates,
                                            'start_date':start_date,
                                            'end_date':end_date,
                                            'last_data_date':last_data_date,

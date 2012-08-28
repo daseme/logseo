@@ -14,6 +14,7 @@ urlpatterns = patterns('',
     url(r'^landing_pages/page/(\d{1,6})/$', 'logseoapp.views.get_page'),
     (r'^search/', include('haystack.urls')),
     url(r'^$', 'logseoapp.views.home', name='home'),
+    (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^watchlist/', 'logseoapp.views.get_watchlist'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
