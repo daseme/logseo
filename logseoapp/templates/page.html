@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block header_scripts %}
-<link href="/static/css/daterangepicker.css" rel="stylesheet">
-<script type="text/javascript" charset="utf-8" src="/media/date-picker/date.js"></script>
-<script type="text/javascript" charset="utf-8" src="/media/date-picker/daterangepicker.js"></script>
+
 <script language="javascript" type="text/javascript">
     /* Default class modification */
 $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -173,12 +171,15 @@ $(document).ready(function() {
 
         <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
             <thead>
+                    <tr>
+                        <th rowspan="2" width="280px">Search Query</th>
+                        <th colspan="4">Metrics for Search Queries</th>
+                    </tr>
                 <tr>
-                    <th>phrase</th>
-                    <th>visitors</th>
-                    <th>google</th>
-                    <th>bing</th>
-                    <th>yahoo</th>
+                    <th>Visitors</th>
+                    <th>Google Visits</th>
+                    <th>Bing Visits</th>
+                    <th>Yahoo Visits</th>
                 </tr>
             </thead>
             <tbody>

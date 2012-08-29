@@ -377,8 +377,6 @@ def get_landing_pages(request, start_date="", end_date=""):
     unique view code
     """
 
-    dates         = LogSeRank.objects.values('refdate').distinct()
-
     landing_pages = LogSeRank.objects.values('page_id', 'page_id__page'). \
                                       filter(refdate__range=[start_date, end_date],
                                              client_id=client_id). \
