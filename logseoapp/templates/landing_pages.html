@@ -127,7 +127,7 @@ $(document).ready(function() {
 		"oLanguage": {
 			"sLengthMenu": "_MENU_ records per page"
             },
-        "aaSorting": [[ 3, "desc" ]]
+        "aaSorting": [[ 2, "desc" ]]
 	} );
 } );
 
@@ -155,17 +155,19 @@ $(document).ready(function() {
             <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
                 <thead>
                     <tr>
-                        <th width="4%" rowspan="2"></th>
                         <th rowspan="2" width="280px">Page</th>
-                        <th colspan="8">Metrics for Pages</th>
+                        <th colspan="7">Metrics for Pages</th>
                     </tr>
                     <tr>
-                        <th>gcount</th>
-                        <th>bcount</th>
-                        <th>ycount</th>
-                        <th>phrase count</th>
-                        <th>ip count</th>
-                        <th>ip per q</th>
+                        <th>Organic Visitors</th>
+                        <th># Search Queries</th>
+                        <th>Visitors/Search Query</th>
+                        <th>Google Visits</th>
+                        <th>Bing Visits</th>
+                        <th>Yahoo Visits</th>
+                        
+                        
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -175,11 +177,16 @@ $(document).ready(function() {
                     {% for dict in combo %}
 
                     <tr>
-                        <td>placeholder</td>
+                        
                         <td style="text-align:left;">
                             <a href="/landing_pages/page/{{dict.page_id}}/" style="text-decoration:none;">{{dict.page_id__page}}</a></td>
-                        <td>{{ dict.num_google}} </td><td>{{dict.num_bing}}</td><td>{{dict.num_yahoo}}</td>
-                        <td>{{dict.num_phrase}}</td><td>{{dict.num_ip}}</td><td>{{dict.ip_per_q}}</td>
+                        <td>{{dict.num_ip}}</td>
+                        <td>{{dict.num_phrase}}</td>
+                        <td>{{dict.ip_per_q}}</td>
+                        <td>{{ dict.num_google}}</td>
+                        <td>{{dict.num_bing}}</td>
+                        <td>{{dict.num_yahoo}}</td>
+                        
                     </tr>
                     {% endfor %}
                     {{ gcount }}

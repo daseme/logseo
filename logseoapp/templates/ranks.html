@@ -139,8 +139,9 @@ $(document).ready(function() {
 						null,
 						null,
 						null,
-						null,
-					{ "sClass": "inlinesparkline", "sTitle": "chart" }
+                        null,
+                        null
+
 					]
                     });
 
@@ -181,7 +182,7 @@ $(document).ready(function() {
 			            <th>ratio</th>
 			            <th>avgrank</th>
 			            <th>stdev</th>
-			            <th>chart2gohere</th>
+			            <th>min,max</th>
                     </tr>
                 </thead>
 	            <tbody>
@@ -196,7 +197,7 @@ $(document).ready(function() {
                         <td>{{ dict.ratio }}</td>
                         <td>{{ dict.avg_rank|floatformat:2 }}</td>
                         <td>{{ dict.st_rank|floatformat:2 }}</td>
-                        <td>empty for now</td>
+                        <td>{{dict.min_rank}},{{dict.max_rank}}</td>
 		            </tr>
                 {% endfor %}
 {% endblock %}

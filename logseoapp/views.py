@@ -5,7 +5,7 @@ from django.shortcuts import render
 #from django.template import RequestContext
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from logseoapp.forms import ClientChoice
-from django.db.models import Avg, Count, StdDev
+from django.db.models import Avg, Count, StdDev, Min, Max
 from django.db import connection
 from collections import defaultdict
 from operator import itemgetter
@@ -219,7 +219,9 @@ def get_ranks(request=None, start_date="", end_date=""):
                                  annotate( num_ips=Count('ip', distinct = True),
                                            num_rank=Count('position'),
                                            avg_rank=Avg('position'),
-                                           st_rank = StdDev('position')). \
+                                           st_rank = StdDev('position'),
+                                           min_rank=Min('position'),
+                                           max_rank=Max('position')). \
                                  order_by('phrase_id__phrase')
 
 
@@ -323,6 +325,15 @@ def get_phrase(request, phrase):
                                     filter(phrase_id = phrase,
                                            refdate__range=(start_date, end_date)). \
                                     order_by('page_id__page','refdate')
+
+    # convert queryset to list and remove ranks of '0' for sparkline
+    # NO - the reason i am not eliminating 0 rank from queryset is to get ALL the pages assoc with a phrase, not just ranked
+    # HOWEVER, I don't want to chart ranks of 0, so if a page has only one appearance in the dictionary and a position of zero
+    # I want to keep it
+
+    #pages = list(pages)
+    #pages = [ e['position'] = 'na' for e in pages if e['position'] = 0 ]
+
 
     #debug lines
     sql = connection.queries
