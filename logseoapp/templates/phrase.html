@@ -121,7 +121,7 @@ $(document).ready(function() {
 		"oLanguage": {
 			"sLengthMenu": "_MENU_ records per page"
             },
-                "sPaginationType": "full_numbers",
+                "sPaginationType": "bootstrap",
                 "aaSorting": [[ 1, "desc" ]]
                 });
             } );
@@ -190,7 +190,10 @@ $(document).ready(function() {
             <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
                 <thead>
                     <tr>
-                        <th>page</th>
+                        <th rowspan="2" width="280px">Landing Page</th>
+			            <th colspan="2">Metrics for Landing Page</th>
+                    <tr>
+
                         <th>rank chart</th>
                         <th>ranks</th>
                     </tr>
@@ -212,7 +215,7 @@ $(document).ready(function() {
                         <td>
 
                                 {% for item in page.list %}
-                                -{{ item.position }}{% if not forloop.last %}, {% endif %}
+                                {{ item.position }}{% if not forloop.last %}, {% endif %}
                                 {% endfor %}
 
                         </td>
