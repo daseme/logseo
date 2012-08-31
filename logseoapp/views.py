@@ -107,6 +107,44 @@ def home(request, client_id=""):
                                           'bigram_losers':bigram_losers,
                                           'pages_query':pages_query})
 
+def home_engine_detail(request, engine, client_id="", ranked=""):
+    """ retrieve stats for home page,
+    restricted to last full week (mon-sun) in our data-set """
+
+    # client from form
+    client_id = client_select(request.GET)
+
+    form = ClientChoice(initial={'client_list': client_id})
+
+    # client name
+    client = Client.objects.values('name').filter(pk=client_id)
+
+    # latest week in our db
+    latest_sunday,week_ago = last_full_week(client_id)
+
+    # engine name from url
+
+    if engine != 'all':
+        metrics = [{'engine':engine,'position':-1,'metric_name':"New " + engine + " Queries"}]
+
+    else:
+        metrics = [{'engine':'','position':-1,'metric_name':'New Queries'}]
+
+    data =  metrics_processing_row2(metrics,client_id)
+
+    #debug lines
+    sql             = connection.queries
+
+
+    return render(request,'dashboard/engine_detail.html', {
+                                          'sql':sql,
+                                          'form':form,
+                                          'client_id':client_id,
+                                          'client':client,
+                                          'week_ago':week_ago,
+                                          'latest_date':latest_sunday,
+                                          'data':data})
+
 def get_queries(request=None, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
 

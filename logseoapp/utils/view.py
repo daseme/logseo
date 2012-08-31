@@ -156,6 +156,7 @@ def metrics_processing_row2(engine_list,client_id):
     for engine in engine_list:
         metric_d = {}
         metric_d['metric_name'] = engine['metric_name']
+        metric_d['engine'] = engine['engine']
         query = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase','phrase_id__first_seen'). \
                                   annotate( num_ips=Count('ip', distinct = True)). \
                                   filter(   engine_id__engine__contains =  engine['engine'],
