@@ -221,7 +221,7 @@ def get_queries(request=None, start_date="", end_date=""):
                                           'all_phrase':all_phrase})
 
 
-def get_ranks(request=None, start_date="", end_date=""):
+def get_ranks(request, page, start_date="", end_date=""):
     """ get rank data for kws, default dates set in date_select() fx """
 
 
@@ -248,9 +248,19 @@ def get_ranks(request=None, start_date="", end_date=""):
     datatable data
     """
 
+    if page == 'queries':
+        page = 'Queries'
+        id = 'phrase_id'
+        value = 'phrase_id__phrase'
+
+    else:
+        page = 'Landing Pages'
+        id = 'page_id'
+        value = 'page_id__page'
+
     # retrieves all search queries and visitors for which we have a rank in the given time-frame
     # does not retrieve a count of all visitors who have come through the search query during the time-frame
-    ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
+    ip_count = LogSeRank.objects.values(   id,value). \
                                  filter(   position__gt = 0,
                                            refdate__range=[start_date, end_date],
                                            client_id=client_id). \
@@ -260,7 +270,7 @@ def get_ranks(request=None, start_date="", end_date=""):
                                            st_rank = StdDev('position'),
                                            min_rank=Min('position'),
                                            max_rank=Max('position')). \
-                                 order_by('phrase_id__phrase')
+                                 order_by(value)
 
 
     for dict in ip_count:
@@ -305,6 +315,9 @@ def get_ranks(request=None, start_date="", end_date=""):
                                           'last_data_date':last_data_date,
                                           'ip_cnts':ip_count,
                                           'dates':dates,
+                                          'page':page,
+                                          'id':id,
+                                          'value':value,
                                           'rankphrase_chart':rankphrase_chart,
                                           'all_phrase':all_phrase,
                                           'position_chart':position_chart})

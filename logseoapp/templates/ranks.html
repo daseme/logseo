@@ -152,7 +152,7 @@ $(document).ready(function() {
         <div class="span12">
             <div class="page-header">
                 {% include 'dateform.html' %}
-                <h1>{{ client.0.name|upper }} Ranked Queries</h1>
+                <h1>{{ client.0.name|upper }} Ranked {{ page }}</h1>
             </div>
         </div>
     </div>
@@ -186,8 +186,11 @@ $(document).ready(function() {
                 {% block content %}
                 {% for dict in ip_cnts %}
 		            <tr>
-                        
-                        <td style="text-align:left;"><a href="/queries/individual-query/{{dict.phrase_id}}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
+                        {% if page == 'Queries' %}
+                        <td style="text-align:left;"><a href="/queries/individual-query/{{ dict.phrase_id }}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
+                        {% else %}
+                        <td style="text-align:left;"><a href="/queries/individual-query/{{ dict.page_id }}/" style="text-decoration:none;">{{ dict.page_id__page }}</a></td>
+                        {% endif %}
                         <td>G</td>
                         <td>{{dict.num_ips}}</td>
                         <td>{{ dict.num_rank }}</td>

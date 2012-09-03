@@ -7,7 +7,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
 
-    url(r'^ranks/$', 'logseoapp.views.get_ranks'),
+    url(r'^(queries|landing_pages)/ranks/$', 'logseoapp.views.get_ranks'),
     url(r'^queries/$', 'logseoapp.views.get_queries'),
     url(r'^queries/individual-query/(\d{1,6})/$', 'logseoapp.views.get_phrase'),
     url(r'^landing_pages/$', 'logseoapp.views.get_landing_pages'),
