@@ -117,25 +117,22 @@ $.extend( $.fn.dataTableExt.oPagination, {
 $(document).ready(function() {
     var oTable = $('#example').dataTable( {
         	"fnDrawCallback": function() { //call sparkline init after row drawn
-            $('.inlinesparkline').sparkline('html', { enableTagOptions: true });
             },
             "bPaginate": true,
+            'bProcessing': true,
+            "bServerSide": true,
+            "sAjaxSource": "{% url logseoapp.views.get_queries_datatable %}?client_list={{ client_id }}&start_date={{ start_date|date:"Y-m-d" }}&end_date={{ end_date|date:"Y-m-d" }}",
             "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
             "sPaginationType": "bootstrap",
             "oLanguage": {
 			"sLengthMenu": "_MENU_ records per page"
             },
-            "aaSorting": [[ 4, "desc" ]],
+            "aaSorting": [[ 1, "desc" ]],
         	"aoColumns": [
-						{ "sClass": "center", "bSortable": false },
-						{ "sClass": "left" },
-					  null,
+						{ "bSearchable": true, "sClass": "left" },
+					    null,
 						null,
-						null,
-						null,
-						null,
-						null,
-					{ "sClass": "inlinesparkline", "sTitle": "chart" }
+                        null
 					]
                     });
 
@@ -167,41 +164,17 @@ $(document).ready(function() {
        <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
 		<thead>
 		<tr>
-			<th width="4%" rowspan="2"></th>
 			<th rowspan="2" width="280px">Phrase</th>
-			<th colspan="8">Metrics for Ranked Phrases</th>
+			<th colspan="8">Metrics for All Search Queries</th>
 		</tr>
 		<tr>
-			<th>engine</th>
-			<th>ipcount</th>
-			<th>rcount</th>
-			<th>ratio</th>
-			<th>avgrank</th>
-			<th>stdev</th>
-			<th>chart2gohere</th>
+			<th>Organic Visitors</th>
+			<th># Pages</th>
+            <th># Engines</th>
+
       </tr>
       </thead>
 	    <tbody>
-
- {% block content %}
-     {% for dict in ip_cnts %}
-
-		<tr>
-             <td>placeholder</td>
-
-
-           <td style="text-align:left;"><a href="/queries/individual-query/{{dict.phrase_id}}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
-           <td>G</td><td>{{dict.num_ips}}</td>
-           <td>{{ dict.num_rank }}</td>
-           <td>{{ dict.ratio }}</td>
-           <td>{{ dict.avg_rank|floatformat:2 }}</td>
-           <td>{{ dict.st_rank|floatformat:2 }}</td>
-           <td>empty for now</td>
-		</tr>
-    {% endfor %}
-
-
-{% endblock %}
 
         </tbody>
 			</table>
@@ -212,7 +185,7 @@ $(document).ready(function() {
 
 nv.addGraph(function() {
     
-    var chart = nv.models.linePlusBarChart();
+    var chart = nv.models.lineChart();
 
     chart.xAxis
     .tickFormat(function(d) {
@@ -220,16 +193,15 @@ nv.addGraph(function() {
     });
     chart.xAxis.tickPadding([12]) //add head space to x-axis labels
 	  
-    chart.y1Axis.tickFormat(d3.format(',.2f'));
+    chart.yAxis.tickFormat(d3.format(',.2f'));
 
-    chart.y2Axis.tickFormat(d3.format(',.2f'));
+
 
     d3.select('#chart svg')
     .datum(data())
     .transition().duration(500)
     .call(chart);
 
-    chart.bars.forceY([0]);
     nv.utils.windowResize(chart.update);
  
     return chart;
@@ -239,17 +211,11 @@ function data() {
 
     return [
     {
-      "values": {{ rank_phrase|safe }},
-      "key": "Ranked Queries",
+      "values": {{ all_phrase|safe }},
+      "key": "Search Queries",
       "color": "#E9967A",
       "bar": true
-  },
-  {
-      "values": {{ avg_position|safe }},
-      "key": "Avg Rank",
-      "color": "#ADB7AB"
   }
-  
   
   ];
     }

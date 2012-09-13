@@ -97,6 +97,8 @@ class LogSeRank(models.Model):
     refdate = models.CharField(max_length=765)
     reftime = models.CharField(max_length=765)
     objects = LogSeRankCntManager()
+
+
     class Meta:
         db_table = u'logseoapp_log_se_rank'
 

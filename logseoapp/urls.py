@@ -9,13 +9,15 @@ urlpatterns = patterns('',
 
     url(r'^(queries|landing_pages)/ranks/$', 'logseoapp.views.get_ranks'),
     url(r'^queries/$', 'logseoapp.views.get_queries'),
+        url(r'^ajax/get-queries-datatable/$', 'logseoapp.views.get_queries_datatable'),
+
     url(r'^queries/individual-query/(\d{1,6})/$', 'logseoapp.views.get_phrase'),
     url(r'^landing_pages/$', 'logseoapp.views.get_landing_pages'),
     url(r'^landing_pages/page/(\d{1,6})/$', 'logseoapp.views.get_page'),
-    (r'^search/', include('haystack.urls')),
+    url(r'^search/', include('haystack.urls')),
     url(r'^$', 'logseoapp.views.home', name='home'),
     url(r'^engines/(\w+)/$', 'logseoapp.views.home_engine_detail'),
-    (r'^accounts/login/$', 'django.contrib.auth.views.login'),
+    url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^watchlist/', 'logseoapp.views.get_watchlist'),
 
     # Uncomment the admin/doc line below to enable admin documentation:

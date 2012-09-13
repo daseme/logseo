@@ -1,7 +1,11 @@
 from __future__ import division
 from django.contrib.auth.decorators import login_required
-from utils.view import *
+from datetime import timedelta
+from utils.view import date_select,client_select,last_full_week
+from utils.view import metrics_processing_row1,metrics_processing_row2
+from utils.view import bigram_stats,process_time_series,get_datatables_records
 from django.shortcuts import render
+
 #from django.template import RequestContext
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from logseoapp.forms import ClientChoice
@@ -85,11 +89,11 @@ def home(request, client_id=""):
 
 
     #debug lines
-    sql             = connection.queries
+    #sql             = connection.queries
 
 
     return render(request,'dashboard/index.html', {
-                                          'sql':sql,
+
                                           'form':form,
                                           'client_id':client_id,
                                           'metrics_row1_dict':metrics_row1_dict,
@@ -145,7 +149,7 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
                                           'latest_date':latest_sunday,
                                           'data':data})
 
-def get_queries(request=None, start_date="", end_date=""):
+def get_queries(request):
     """ get rank data for kws, default dates set in date_select() fx """
 
 
@@ -168,25 +172,6 @@ def get_queries(request=None, start_date="", end_date=""):
     """
     unique view code
     """
-    """
-    datatable data
-    """
-    ip_count = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
-                                 filter(   engine_id__engine__contains = 'Google',
-                                           refdate__range=(start_date, end_date),
-                                           client_id=client_id). \
-                                 annotate( num_ips=Count('ip', distinct = True),
-                                           num_rank=Count('position'),
-                                           avg_rank=Avg('position'),
-                                           st_rank = StdDev('position')). \
-                                 order_by('phrase_id__phrase') # FUCKING WORKS
-
-
-    for dict in ip_count:
-        num_ratio = dict['num_rank'] / dict['num_ips']
-        dict['ratio'] = round(num_ratio, 2)
-
-    phrase_ip   = LogSeRank.objects.annotate(num_ips=Count('ip')).aggregate(Avg('num_ips'))
 
     """
     chart / time series data
@@ -194,31 +179,54 @@ def get_queries(request=None, start_date="", end_date=""):
     all_phrase    = LogSeRank.objects.values('id','phrase_id','refdate'). \
                                       filter(client_id=client_id).distinct()
 
-
-
-
-
     # make ranks negative so lower ranks show higher on the chart
-
     all_phrase   = process_time_series(all_phrase,start_date,end_date)
 
 
-
-
     #debug lines
-    sql       = connection.queries
+    #sql       = connection.queries
 
-    return render(request,'queries.html', { 'sql':sql,
+    return render(request,'queries.html', {
                                           'form':form,
                                           'client':client,
                                           'client_id':client_id,
-                                          'phrase_ip':phrase_ip,
                                           'start_date':start_date,
                                           'end_date':end_date,
                                           'last_data_date':last_data_date,
-                                          'ip_cnts':ip_count,
                                           'dates':dates,
                                           'all_phrase':all_phrase})
+
+
+def get_queries_datatable(request):
+
+    """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
+
+    # client name
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
+
+    #prepare the params
+
+    #initial querySet
+    querySet = LogSeRank.objects.values(  'phrase_id','phrase_id__phrase'). \
+                                 filter(   refdate__range=(start_date, end_date),
+                                           client_id=client_id). \
+                                 annotate( num_ips=Count('ip', distinct = True),
+                                           num_pages=Count('page_id', distinct = True),
+                                           num_engines=Count('engine_id', distinct = True)). \
+                                 order_by('phrase_id__phrase')
+
+    #columnIndexNameMap is required for correct sorting behavior
+    columnIndexNameMap = { 0: 'phrase_id__phrase', 1: 'num_ips', 2: 'num_pages', 3: 'num_engines' }
+    #path to template used to generate json (optional)
+    jsonTemplatePath = 'queries_json.txt'
+
+    #call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap,jsonTemplatePath)
 
 
 def get_ranks(request, page, start_date="", end_date=""):
@@ -304,9 +312,9 @@ def get_ranks(request, page, start_date="", end_date=""):
 
 
     #debug lines
-    sql       = connection.queries
+    #sql       = connection.queries
 
-    return render(request,'ranks.html', { 'sql':sql,
+    return render(request,'ranks.html', {
                                           'form':form,
                                           'client':client,
                                           'client_id':client_id,
@@ -567,4 +575,3 @@ def get_watchlist(request):
 
 
     return render(request, 'watchlist.html', {  })
-

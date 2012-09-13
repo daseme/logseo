@@ -15,8 +15,6 @@
         <script src="/static/css/bootstrap/js/bootstrap.min.js"></script>
         <script src="/media/d3.v2.min.js"></script>
         <script src="/media/nv.d3.min.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/media/d3.layout.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/media/rickshaw.min.js"></script>
         <script type="text/javascript" charset="utf-8" src="/media/plugins/DataTables-1.9.1/media/js/jquery.dataTables.min.js"></script>
         <script type="text/javascript" charset="utf-8" src="/media/plugins/bootstrap-daterangepicker/date.js"></script>
         <script type="text/javascript" charset="utf-8" src="/media/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
@@ -55,9 +53,9 @@
                 <ul class="nav">      
                     <li {% if request.path = '/' %} class="active"{% endif %}><a href="/">Home</a></li>
                     <li {% if request.path = '/queries/' %} class="active"{% endif %}><a href="/queries/">Queries</a></li>
-                    <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/ranks/">Ranked Queries</a></li>
+                    <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/queries/ranks/">Ranked Queries</a></li>
                     <li {% if request.path = '/landing_pages/' %} class="active"{% endif %}><a href="/landing_pages/">Landing Pages</a></li>                      
-                    <li {% if request.path = '/landing_pages/ranked/' %} class="active"{% endif %}><a href="/landing_pages/ranked/">Ranked Landing Pages</a></li>  
+                    <li {% if request.path = '/landing_pages/ranked/' %} class="active"{% endif %}><a href="/landing_pages/ranks/">Ranked Landing Pages</a></li>  
                     <li {% if request.path = '/watchlist/' %} class="active"{% endif %}><a href="/watchlist/">Watch List</a></li> 
                 </ul>
             </div><!--/.nav-collapse -->
