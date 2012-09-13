@@ -119,9 +119,12 @@ $.extend( $.fn.dataTableExt.oPagination, {
 $(document).ready(function() {
     var oTable = $('#example').dataTable( {
         	"fnDrawCallback": function() { //call sparkline init after row drawn
-            $('.inlinesparkline').sparkline('html', { enableTagOptions: true });
+           // $('.inlinesparkline').sparkline('html', { enableTagOptions: true });
             },
             "bPaginate": true,
+            'bProcessing': true,
+            "bServerSide": true,
+            "sAjaxSource": "/{{ page }}/ranks/ajax/get-ranks-datatable/?client_list={{ client_id }}&start_date={{ start_date|date:"Y-m-d" }}&end_date={{ end_date|date:"Y-m-d" }}",
             "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
             "sPaginationType": "bootstrap",
             "oLanguage": {
@@ -132,7 +135,6 @@ $(document).ready(function() {
 					
 						{ "sClass": "left" },
 					  null,
-						null,
 						null,
 						null,
 						null,
@@ -168,39 +170,26 @@ $(document).ready(function() {
             <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
 		        <thead>
 		            <tr>
-			            
-			            <th rowspan="2" width="280px">Phrase</th>
-			            <th colspan="8">Metrics for Ranked Phrases</th>
+			            {% if page = 'queries' %}
+                        <th rowspan="2" width="280px">Phrase</th>
+                        <th colspan="8">Metrics for Ranked Phrases</th>
+                        {% else %}
+                        <th rowspan="2" width="280px">Landing Page</th>
+                        <th colspan="8">Metrics for Landing Pages</th>
+                        {% endif %}
+
 		            </tr>
 		            <tr>
 			            <th>Search Engine</th>
                         <th>Ranked Visitors</th>
 			            <th>Ranked Visits</th>
-			            <th>ratio</th>
 			            <th>avgrank</th>
 			            <th>stdev</th>
 			            <th>min,max</th>
                     </tr>
                 </thead>
 	            <tbody>
-                {% block content %}
-                {% for dict in ip_cnts %}
-		            <tr>
-                        {% if page == 'Queries' %}
-                        <td style="text-align:left;"><a href="/queries/individual-query/{{ dict.phrase_id }}/" style="text-decoration:none;">{{ dict.phrase_id__phrase }}</a></td>
-                        {% else %}
-                        <td style="text-align:left;"><a href="/queries/individual-query/{{ dict.page_id }}/" style="text-decoration:none;">{{ dict.page_id__page }}</a></td>
-                        {% endif %}
-                        <td>G</td>
-                        <td>{{dict.num_ips}}</td>
-                        <td>{{ dict.num_rank }}</td>
-                        <td>{{ dict.ratio }}</td>
-                        <td>{{ dict.avg_rank|floatformat:2 }}</td>
-                        <td>{{ dict.st_rank|floatformat:2 }}</td>
-                        <td>{{dict.min_rank}},{{dict.max_rank}}</td>
-		            </tr>
-                {% endfor %}
-{% endblock %}
+
 
                 </tbody>
             </table>   

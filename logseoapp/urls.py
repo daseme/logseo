@@ -8,6 +8,8 @@ admin.autodiscover()
 urlpatterns = patterns('',
 
     url(r'^(queries|landing_pages)/ranks/$', 'logseoapp.views.get_ranks'),
+        url(r'^(queries|landing_pages)/ranks/ajax/get-ranks-datatable/$', 'logseoapp.views.get_ranks_datatable'),
+
     url(r'^queries/$', 'logseoapp.views.get_queries'),
         url(r'^ajax/get-queries-datatable/$', 'logseoapp.views.get_queries_datatable'),
 

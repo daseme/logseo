@@ -252,40 +252,6 @@ def get_ranks(request, page, start_date="", end_date=""):
     """
     unique view code
     """
-    """
-    datatable data
-    """
-
-    if page == 'queries':
-        page = 'Queries'
-        id = 'phrase_id'
-        value = 'phrase_id__phrase'
-
-    else:
-        page = 'Landing Pages'
-        id = 'page_id'
-        value = 'page_id__page'
-
-    # retrieves all search queries and visitors for which we have a rank in the given time-frame
-    # does not retrieve a count of all visitors who have come through the search query during the time-frame
-    ip_count = LogSeRank.objects.values(   id,value). \
-                                 filter(   position__gt = 0,
-                                           refdate__range=[start_date, end_date],
-                                           client_id=client_id). \
-                                 annotate( num_ips=Count('ip', distinct = True),
-                                           num_rank=Count('position'),
-                                           avg_rank=Avg('position'),
-                                           st_rank = StdDev('position'),
-                                           min_rank=Min('position'),
-                                           max_rank=Max('position')). \
-                                 order_by(value)
-
-
-    for dict in ip_count:
-        num_ratio = dict['num_rank'] / dict['num_ips']
-        dict['ratio'] = round(num_ratio, 2)
-
-
 
     """
     chart / time series data
@@ -321,14 +287,66 @@ def get_ranks(request, page, start_date="", end_date=""):
                                           'start_date':start_date,
                                           'end_date':end_date,
                                           'last_data_date':last_data_date,
-                                          'ip_cnts':ip_count,
                                           'dates':dates,
                                           'page':page,
                                           'id':id,
-                                          'value':value,
                                           'rankphrase_chart':rankphrase_chart,
                                           'all_phrase':all_phrase,
                                           'position_chart':position_chart})
+
+def get_ranks_datatable(request,page):
+
+    """
+    common code that needs to learn abotu DRY
+    """
+    # client from form
+    client_id = client_select(request.GET)
+
+    # client name
+
+    start_date,end_date,last_data_date = date_select(request.GET,client_id)
+
+    #prepare the params
+
+
+
+    if page == 'queries':
+        page = 'Queries'
+        id = 'phrase_id'
+        value = 'phrase_id__phrase'
+
+    else:
+        page = 'Landing Pages'
+        id = 'page_id'
+        value = 'page_id__page'
+
+    #initial querySet
+    # retrieves all search queries and visitors for which we have a rank in the given time-frame
+    # does not retrieve a count of all visitors who have come through the search query during the time-frame
+    querySet = LogSeRank.objects.values(   id,value). \
+                                 filter(   position__gt = 0,
+                                           refdate__range=[start_date, end_date],
+                                           client_id=client_id). \
+                                 annotate( num_ips=Count('ip', distinct = True),
+                                           num_rank=Count('position'),
+                                           avg_rank=Avg('position'),
+                                           st_rank = StdDev('position'),
+                                           min_rank=Min('position'),
+                                           max_rank=Max('position')). \
+                                 order_by(value)
+
+
+    for dict in querySet:
+        num_ratio = dict['num_rank'] / dict['num_ips']
+        dict['ratio'] = round(num_ratio, 2)
+
+    #columnIndexNameMap is required for correct sorting behavior
+    columnIndexNameMap = { 0: 'phrase_id__phrase', 1: 'search engine', 2: 'num_ips', 3: 'num_rank', 4: 'avg_rank', 5: 'st_rank', 6: 'min_rank' }
+    #path to template used to generate json (optional)
+    jsonTemplatePath = 'ranks_json.txt'
+
+    #call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath,page)
 
 def get_phrase(request, phrase):
     """ get data on a particular kw query """

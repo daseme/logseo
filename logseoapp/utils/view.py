@@ -36,7 +36,7 @@ def date_select(get_request,client_id):
         end_date   =  datetime.strptime(get_request['end_date'], '%Y-%m-%d').date()
 
         #handle the case where one client has a different date range than another client
-        if end_date < last_data_date and start_date > first_data_date:
+        if end_date <= last_data_date and start_date >= first_data_date:
             return start_date,end_date,last_data_date
 
         else:
@@ -198,7 +198,7 @@ def metrics_processing_row2(engine_list,client_id):
 
 
 
-def get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath = None, *args):
+def get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath = None, page = None, *args):
     """
     Usage:
         querySet: query set to draw data from.
