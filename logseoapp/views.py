@@ -336,17 +336,15 @@ def get_ranks_datatable(request,page):
                                  order_by(value)
 
 
-    for dict in querySet:
-        num_ratio = dict['num_rank'] / dict['num_ips']
-        dict['ratio'] = round(num_ratio, 2)
+
 
     #columnIndexNameMap is required for correct sorting behavior
-    columnIndexNameMap = { 0: 'phrase_id__phrase', 1: 'search engine', 2: 'num_ips', 3: 'num_rank', 4: 'avg_rank', 5: 'st_rank', 6: 'min_rank' }
+    columnIndexNameMap = { 0: value, 1: 'engine_id', 2: 'num_ips', 3: 'num_rank', 4: 'avg_rank', 5: 'st_rank', 6: 'min_rank' }
     #path to template used to generate json (optional)
     jsonTemplatePath = 'ranks_json.txt'
 
     #call to generic function from utils
-    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath,page)
+    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath)
 
 def get_phrase(request, phrase):
     """ get data on a particular kw query """

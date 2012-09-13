@@ -198,7 +198,7 @@ def metrics_processing_row2(engine_list,client_id):
 
 
 
-def get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath = None, page = None, *args):
+def get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath = None, *args):
     """
     Usage:
         querySet: query set to draw data from.
