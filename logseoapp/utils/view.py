@@ -19,15 +19,29 @@ def date_select(get_request,client_id):
     """ defaults to last week available for a client using last_full_week(),
     or uses date select forms """
 
+    first_data_date = LogSeRank.objects.values('refdate'). \
+                                     filter(client_id=client_id). \
+                                     order_by('refdate')[0]
+    first_data_date = first_data_date['refdate']
+
     last_data_date = LogSeRank.objects.values('refdate'). \
                                      filter(client_id=client_id). \
                                      order_by('-refdate')[0]
     last_data_date = last_data_date['refdate'] # possible we don't have a full month here
 
+
+
     if 'start_date' and 'end_date' in get_request:
         start_date =  datetime.strptime(get_request['start_date'], '%Y-%m-%d').date()
         end_date   =  datetime.strptime(get_request['end_date'], '%Y-%m-%d').date()
-        return start_date,end_date,last_data_date
+
+        #handle the case where one client has a different date range than another client
+        if end_date < last_data_date and start_date > first_data_date:
+            return start_date,end_date,last_data_date
+
+        else:
+            end_date,start_date = last_full_week(client_id)
+            return start_date,end_date,last_data_date
 
     else:
         end_date,start_date = last_full_week(client_id)
