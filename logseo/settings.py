@@ -152,18 +152,12 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'haystack',
     'qsstats',  # using django-qsstats-magic
     'logseoapp',
-    #'logseo.logseoapp.parselog',
     'south',
     'taggit',
 
 )
-HAYSTACK_SITECONF = 'logseoapp.search_sites'
-HAYSTACK_SEARCH_ENGINE = 'whoosh'
-HAYSTACK_WHOOSH_PATH = '/home/kurt/websites/logseo/whoosh/mysite_index'
-
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
