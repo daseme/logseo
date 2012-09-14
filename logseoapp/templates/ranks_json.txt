@@ -1,0 +1,27 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+
+    {% for dict in querySet %}
+    [
+
+        "{% if dict.phrase_id__phrase %}<a href='/queries/individual-query/{{ dict.phrase_id }}/'>{{ dict.phrase_id__phrase }}</a>{% else %}<a href='/landing_pages/page/{{ dict.page_id }}/'>{{ dict.page_id__page }}</a>{% endif %}",
+        "Google",
+        "{{ dict.num_ips }}",
+        "{{ dict.num_rank }}",
+        "{{ dict.avg_rank|floatformat:2 }}",
+        "{{ dict.st_rank|floatformat:2 }}",
+        "{{dict.min_rank}},{{dict.max_rank}}"
+
+    ]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+
+
+
