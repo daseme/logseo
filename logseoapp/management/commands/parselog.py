@@ -30,7 +30,6 @@ from optparse import make_option
 from django.core.management.base import BaseCommand  # CommandError
 from logseoapp.models import LogSeRank, Engine, Kw, Page, Client
 from datetime import datetime
-#import glob
 import urlparse
 import re
 import apachelog
@@ -58,7 +57,9 @@ class Command(BaseCommand):
         client_list, client_choice = client_choose()
 
         try:
-            log_path_exists, client_id, client_name, log_path = client_search(client_choice, client_list)
+            log_path_exists, client_id, client_name, log_path = client_search(client_choice,
+                                                                              client_list)
+
             self.stdout.write("client id of %d and client name of %s w log path %s"
                               % (client_id, client_name, log_path))
 
@@ -194,7 +195,9 @@ def check_log_path(c_list):
 
     else:
         bad_path = True
-        print('We did not find any log file in %s, pls add files then start over \n\n' % log_path)
+        print('We did not find any log file in %s, pls add files then start over \n\n'
+                % log_path)
+
         return bad_path
 
 
