@@ -1,16 +1,15 @@
 from __future__ import division
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 from datetime import timedelta
+# logseo utility functions
 from utils.view import date_select, client_select, last_full_week
 from utils.view import metrics_processing_row1, metrics_processing_row2
 from utils.view import bigram_stats, process_time_series, get_datatables_records
-from django.shortcuts import render
-
-#from django.template import RequestContext
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from logseoapp.forms import ClientChoice
 from django.db.models import Avg, Count, StdDev, Min, Max
-from django.db import connection
+# from django.db import connection
 from collections import defaultdict
 from operator import itemgetter
 import json
@@ -50,31 +49,42 @@ def home(request, client_id=""):
     """
     missing kw data
     """
-    last_week      = Kw.objects.values('id', 'phrase').filter(last_seen__range=[week_ago, latest_sunday],
-                                                              client_id=client_id)
+    last_week      = Kw.objects.values('id', 'phrase') \
+                               .filter(last_seen__range=[week_ago, latest_sunday],
+                                       client_id=client_id)
+
     last_week_cnt  = Kw.objects.filter(last_seen__range=[week_ago, latest_sunday],
                                        client_id=client_id).count()
-    wk_bf_last     = Kw.objects.values('id', 'phrase').filter(last_seen__range=[two_wks_ago, week_ago],
-                                                              client_id=client_id)
+
+    wk_bf_last     = Kw.objects.values('id', 'phrase') \
+                               .filter(last_seen__range=[two_wks_ago, week_ago],
+                                       client_id=client_id)
+
     wk_bf_last_cnt = Kw.objects.filter(last_seen__range=[two_wks_ago, week_ago],
-                                       client_id=client_id).count()
+                                       client_id=client_id) \
+                               .count()
 
     # keep all in wk_bf_last if not in last_week
-    unique         = [{'phrase':x['phrase'], 'phrase_id':x['id']} for x in wk_bf_last if x not in last_week]
+    unique         = [{'phrase':x['phrase'], 'phrase_id':x['id']}
+                      for x in wk_bf_last
+                      if x not in last_week]
+
     unique_cnt     = len(unique)
 
     """
     bigram data
     """
-    bigram_this_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase').
-                                  filter(refdate__range=[week_ago, latest_sunday],
-                                  client_id=client_id).
-                                  annotate(num_ips=Count('ip', distinct=True)))
+    bigram_this_wk = bigram_stats(LogSeRank.objects
+                                           .values('phrase_id__phrase')
+                                           .filter(refdate__range=[week_ago, latest_sunday],
+                                                   client_id=client_id)
+                                           .annotate(num_ips=Count('ip', distinct=True)))
 
-    bigram_last_wk = bigram_stats(LogSeRank.objects.values('phrase_id__phrase').
-                                  filter(refdate__range=[two_wks_ago, week_ago],
-                                  client_id=client_id).
-                                  annotate(num_ips=Count('ip', distinct=True)))
+    bigram_last_wk = bigram_stats(LogSeRank.objects
+                                           .values('phrase_id__phrase')
+                                           .filter(refdate__range=[two_wks_ago, week_ago],
+                                                   client_id=client_id)
+                                           .annotate(num_ips=Count('ip', distinct=True)))
 
     # subtract last weeks word cnt from this weeks word cnt to find diff
     bigram_diff    = {k: int(bigram_this_wk.get(k, 0)) - int(bigram_last_wk.get(k, 0))
@@ -89,8 +99,6 @@ def home(request, client_id=""):
                            .filter(client_id=client_id)\
                            .order_by('-num_ips').distinct()
 
-    #debug lines
-    #sql = connection.queries
     return render(request, 'dashboard/index.html', {'form': form,
                                                     'client_id': client_id,
                                                     'metrics_row1_dict': metrics_row1_dict,
@@ -110,8 +118,7 @@ def home(request, client_id=""):
 
 
 def home_engine_detail(request, engine, client_id="", ranked=""):
-    """ retrieve stats for home page,
-    restricted to last full week (mon-sun) in our data-set """
+    """ retrieve all search queries for a given search engine """
 
     # client from form
     client_id = client_select(request.GET)
@@ -134,8 +141,6 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
 
     data = metrics_processing_row2(metrics, client_id)
 
-    #debug lines
-    #sql             = connection.queries
     return render(request, 'dashboard/engine_detail.html', {'form': form,
                                                             'client_id': client_id,
                                                             'client': client,
@@ -176,8 +181,6 @@ def get_queries(request):
     # make ranks negative so lower ranks show higher on the chart
     all_phrase = process_time_series(all_phrase, start_date, end_date)
 
-    #debug lines
-    #sql       = connection.queries
     return render(request, 'queries.html', {'form': form,
                                             'client': client,
                                             'client_id': client_id,
@@ -189,6 +192,7 @@ def get_queries(request):
 
 
 def get_queries_datatable(request):
+    """ produces the datatable section of get_queries """
 
     """
     common code that needs to learn abotu DRY
@@ -245,32 +249,34 @@ def get_ranks(request, page, start_date="", end_date=""):
     """
     chart / time series data
     """
-    all_phrase    = LogSeRank.objects \
-                             .values('id', 'phrase_id', 'refdate') \
-                             .filter(client_id=client_id) \
-                             .distinct()
+    all_phrase = LogSeRank.objects \
+                          .values('id', 'phrase_id', 'refdate') \
+                          .filter(client_id=client_id) \
+                          .distinct()
 
-    rank_phrase   = LogSeRank.objects \
-                             .values('phrase_id', 'refdate') \
-                             .filter(position__gt=0,
-                                     client_id=client_id) \
-                             .distinct()
+    rank_phrase = LogSeRank.objects \
+                           .values('phrase_id', 'refdate') \
+                           .filter(position__gt=0,
+                                   client_id=client_id) \
+                           .distinct()
 
-    position_ts  = LogSeRank.objects \
-                            .values('position', 'refdate') \
-                            .filter(position__gt=0,
-                                    refdate__range=[start_date, end_date],
-                                    client_id=client_id)
+    position_ts = LogSeRank.objects \
+                           .values('position', 'refdate') \
+                           .filter(position__gt=0,
+                                   refdate__range=[start_date, end_date],
+                                   client_id=client_id)
 
-    position_chart = process_time_series(position_ts, start_date, end_date, 'refdate', Avg('position'))
+    position_chart = process_time_series(position_ts,
+                                         start_date,
+                                         end_date,
+                                         'refdate',
+                                         Avg('position'))
 
     # make ranks negative so lower ranks show higher on the chart
     position_chart = [{"x":e['x'], "y":e['y'] * -1} for e in position_chart]
     all_phrase   = process_time_series(all_phrase, start_date, end_date)
     rankphrase_chart  = process_time_series(rank_phrase, start_date, end_date)
 
-    #debug lines
-    #sql       = connection.queries
     return render(request, 'ranks.html', {'form': form,
                                           'client': client,
                                           'client_id': client_id,
@@ -286,6 +292,7 @@ def get_ranks(request, page, start_date="", end_date=""):
 
 
 def get_ranks_datatable(request, page):
+    """ produces the datatable section of get_ranks """
 
     """
     common code that needs to learn abotu DRY
@@ -309,7 +316,8 @@ def get_ranks_datatable(request, page):
 
     # initial querySet
     # retrieves all search queries and visitors for which we have a rank in the given time-frame
-    # does not retrieve a count of all visitors who have come through the search query during the time-frame
+    # does not retrieve a count of all visitors
+    # who have come through the search query during the time-frame
     querySet = LogSeRank.objects \
                         .values(id, value) \
                         .filter(position__gt=0,
@@ -324,7 +332,14 @@ def get_ranks_datatable(request, page):
                         .order_by(value)
 
     #columnIndexNameMap is required for correct sorting behavior
-    columnIndexNameMap = {0: value, 1: 'engine_id', 2: 'num_ips', 3: 'num_rank', 4: 'avg_rank', 5: 'st_rank', 6: 'min_rank'}
+    columnIndexNameMap = {0: value,
+                          1: 'engine_id',
+                          2: 'num_ips',
+                          3: 'num_rank',
+                          4: 'avg_rank',
+                          5: 'st_rank',
+                          6: 'min_rank'}
+
     #path to template used to generate json (optional)
     jsonTemplatePath = 'ranks_json.txt'
 
@@ -333,7 +348,7 @@ def get_ranks_datatable(request, page):
 
 
 def get_phrase(request, phrase):
-    """ get data on a particular kw query """
+    """ get data on a particular search query """
 
     """
     common code that needs to learn abotu DRY
@@ -380,26 +395,23 @@ def get_phrase(request, phrase):
                      .order_by('refdate')
 
     ip_chart = process_time_series(ip_ts, start_date, end_date)
-    #ip_chart    = [{"key":"IP","color":"#E9967A","values":process_time_series(ip_ts,start_date,end_date)}]
+
     ip_chart = json.dumps(ip_chart, sort_keys=True)
 
-    #ip_chart    = process_time_series(ip_ts,start_date,end_date)
-
-    pages = LogSeRank.objects.values('page_id', 'page_id__page', 'position', 'refdate'). \
-        filter(phrase_id=phrase,
-               refdate__range=(start_date, end_date)). \
-        order_by('page_id__page', 'refdate')
+    pages = LogSeRank.objects \
+                     .values('page_id', 'page_id__page', 'position', 'refdate') \
+                     .filter(phrase_id=phrase,
+                             refdate__range=(start_date, end_date)) \
+                     .order_by('page_id__page', 'refdate')
 
     # convert queryset to list and remove ranks of '0' for sparkline
-    # NO - the reason i am not eliminating 0 rank from queryset is to get ALL the pages assoc with a phrase, not just ranked
-    # HOWEVER, I don't want to chart ranks of 0, so if a page has only one appearance in the dictionary and a position of zero
-    # I want to keep it
+    # NO - the reason i am not eliminating 0 rank from queryset is to get ALL the pages assoc with
+    # a phrase, not just ranked, HOWEVER, I don't want to chart ranks of 0, so if a page has only
+    # one appearance in the dictionary and a position of zero I want to keep it
 
     #pages = list(pages)
     #pages = [ e['position'] = 'na' for e in pages if e['position'] = 0 ]
 
-    #debug lines
-    #sql = connection.queries
     return render(request, 'phrase.html', {'dates': dates,
                                            'start_date': start_date,
                                            'end_date': end_date,
@@ -472,22 +484,19 @@ def get_landing_pages(request, start_date="", end_date=""):
     t_series = process_time_series(landing_pages, start_date, end_date)
     t_series = json.dumps(t_series, sort_keys=True)
 
-    #debug lines
-    #sql = connection.queries
-
     return render(request, 'landing_pages.html', {'start_date': start_date,
-                                                 'end_date': end_date,
-                                                 'last_data_date': last_data_date,
-                                                 'dates': dates,
-                                                 'form': form,
-                                                 'client': client,
-                                                 'client_id': client_id,
-                                                 'combo': combo,
-                                                 't_series': t_series})
+                                                  'end_date': end_date,
+                                                  'last_data_date': last_data_date,
+                                                  'dates': dates,
+                                                  'form': form,
+                                                  'client': client,
+                                                  'client_id': client_id,
+                                                  'combo': combo,
+                                                  't_series': t_series})
 
 
 def get_page(request, page):
-    """ get specific page data """
+    """ get data for single landing page """
 
     """
     common code that needs to learn abotu DRY
@@ -517,20 +526,21 @@ def get_page(request, page):
                         .order_by('refdate')
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
-    rankings_chart = [{"x":e['x'], "y":e['y'] * -1} for e in rankings_chart]  # negative rank hack until i can reverse y2axis
-    #rankings_chart    = [{"key":"Rank","color":"#dddddd","values":process_time_series(rankings,start_date,end_date)}]
 
-    ip_ts       = LogSeRank.objects \
-                           .values('refdate') \
-                           .filter(refdate__range=[start_date, end_date],
-                                   page_id=page,
-                                   client_id=client_id) \
-                           .annotate(num_ips=Count('ip', distinct=True)) \
-                           .order_by('refdate')
+    # negative rank hack until i can reverse y2axis
+    rankings_chart = [{"x":e['x'], "y":e['y'] * -1} for e in rankings_chart]
 
-    ip_chart    = process_time_series(ip_ts, start_date, end_date)
-    #ip_chart    = [{"key":"IP","color":"#E9967A","values":process_time_series(ip_ts,start_date,end_date)}]
-    ip_chart    = json.dumps(ip_chart, sort_keys=True)
+    ip_ts = LogSeRank.objects \
+                     .values('refdate') \
+                     .filter(refdate__range=[start_date, end_date],
+                             page_id=page,
+                             client_id=client_id) \
+                     .annotate(num_ips=Count('ip', distinct=True)) \
+                     .order_by('refdate')
+
+    ip_chart = process_time_series(ip_ts, start_date, end_date)
+
+    ip_chart = json.dumps(ip_chart, sort_keys=True)
 
     kws       = LogSeRank.objects \
                          .values('phrase_id', 'phrase_id__phrase') \
@@ -556,12 +566,7 @@ def get_page(request, page):
             d[elem['phrase_id']].update(elem)
     combo = d.values()
 
-    #time_series = process_time_series(ip_cnt,start_date,end_date)
-    #debug lines
-    sql = connection.queries
-
-    return render(request, 'page.html', {'sql': sql,
-                                         'dates': dates,
+    return render(request, 'page.html', {'dates': dates,
                                          'start_date': start_date,
                                          'end_date': end_date,
                                          'last_data_date': last_data_date,
