@@ -58,6 +58,7 @@ def client_select(get_request):
         client_id = 1
         return client_id
 
+
 def last_full_week(client_id):
     """ get last full week, start date, end date, in our database """
 
@@ -83,6 +84,7 @@ def process_time_series(query, start_date, end_date, date_field="refdate", agg_f
     # note *1000 for consumption by javascript
     # note hacky +14400 so we don't get one day off errors.  needs fixing!!
     return [ {"x":(time.mktime(e[0].timetuple())+14400)*1000, "y":e[1]} for e in time_series ]
+
 
 def bigram_stats(query):
     """ return ip-weighted bigram scores for this week last week
@@ -134,6 +136,7 @@ def bigram_stats(query):
     bigram_scores = nltk.FreqDist(bigram_words)
 
     return dict(bigram_scores)
+
 
 def metrics_processing_row1(metrics_list,client_id):
     """ processes row 1 metrics for dashboard """
@@ -194,8 +197,6 @@ def metrics_processing_row2(engine_list,client_id):
         metric_LOD.append(metric_d)
 
     return sorted(metric_LOD, key=lambda x: x['metric_name'])
-
-
 
 
 def get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath = None, *args):

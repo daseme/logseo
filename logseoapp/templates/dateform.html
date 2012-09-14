@@ -24,13 +24,13 @@ var my_date = new Date(my_year, my_month-1, my_day); //date.js advances one mont
 $('#reportrange').daterangepicker(
             {
     ranges: {
-        'Last Day': [my_date, my_date],
+        'Last Day':     [my_date, my_date],
         'Last Day - 1': [new Date(my_year, my_month-1, my_day).add({ days: -1 }), new Date(my_year, my_month-1, my_day).add({ days: -1 })],
-        'Last 7 Days': [new Date(my_year, my_month-1, my_day).add({ days: -6 }), my_date],
+        'Last 7 Days':  [new Date(my_year, my_month-1, my_day).add({ days: -6 }), my_date],
         'Last 30 Days': [new Date(my_year, my_month-1, my_day).add({ days: -29 }), my_date],
-        'This Month': [new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth(), new Date(my_year, my_month-1, my_day).moveToLastDayOfMonth()],
-        'Last Month': [new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth().add({ months: -1 }), 
-                       new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth().add({ days: -1 })]
+        'This Month':   [new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth(), new Date(my_year, my_month-1, my_day).moveToLastDayOfMonth()],
+        'Last Month':   [new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth().add({ months: -1 }), 
+                         new Date(my_year, my_month-1, my_day).moveToFirstDayOfMonth().add({ days: -1 })]
         }
     },
     function(start, end) {
