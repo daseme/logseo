@@ -14,12 +14,12 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'mysql'
-        'NAME': 'you_database',                       # Or path to database file if using sqlite3.
-        'USER': 'your_user',                           # Not used with sqlite3.
-        'PASSWORD': 'your_password',                       # Not used with sqlite3.
-        'HOST': 'localhost',                  # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql',  # Add 'mysql'
+        'NAME': 'you_database',                # Or path to database file if using sqlite3.
+        'USER': 'your_user',                   # Not used with sqlite3.
+        'PASSWORD': 'your_password',           # Not used with sqlite3.
+        'HOST': 'localhost',                   # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                            # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -83,17 +83,17 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '^elv$m8u8o8r_qyo^&$v1h#@4_l7b#*ytwteb0u0w92#5-qc^q'
+SECRET_KEY = 'Make This Your Own'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    #'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -108,13 +108,13 @@ MIDDLEWARE_CLASSES = (
 
 # some johnny settings
 CACHES = {
-    'default' : dict(
-        BACKEND = 'johnny.backends.memcached.MemcachedCache',
-        LOCATION = ['127.0.0.1:11211'],
-        JOHNNY_CACHE = True,
+    'default': dict(
+        BACKEND='johnny.backends.memcached.MemcachedCache',
+        LOCATION=['127.0.0.1:11211'],
+        JOHNNY_CACHE=True,
     )
 }
-JOHNNY_MIDDLEWARE_KEY_PREFIX='logseoapp'
+JOHNNY_MIDDLEWARE_KEY_PREFIX = 'logseoapp'
 
 ROOT_URLCONF = 'logseo.urls'
 
@@ -153,7 +153,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'haystack',
-    'qsstats', #using django-qsstats-magic
+    'qsstats',  # using django-qsstats-magic
     'logseoapp',
     #'logseo.logseoapp.parselog',
     'south',
@@ -193,6 +193,3 @@ try:
     from local_settings import *
 except ImportError, e:
     print 'Unable to load local_settings.py:', e
-
-
-
