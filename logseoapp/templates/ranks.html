@@ -212,11 +212,11 @@ nv.addGraph(function() {
     chart.y1Axis.tickFormat(d3.format(',.2f'));
 
     chart.y2Axis.tickFormat(d3.format(',.2f'));
-    //var y2 = d3.scale.linear().range([0, h]);
+
     chart.bars.forceY([0]);
-    // reverses the domain for ranks, but sets the
-    // domain such that our data may be out of range !!
-    chart.lines.yDomain([10,1]);
+
+    // reverses the domain for ranks so low rank appears higher
+    chart.lines.yDomain([{{ largest_position }},1]);
 
     d3.select('#chart svg')
     .datum(data())

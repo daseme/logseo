@@ -37,15 +37,15 @@ def date_select(get_request, client_id):
 
         #handle the case where one client has a different date range than another client
         if end_date <= last_data_date and start_date >= first_data_date:
-            return start_date, end_date, last_data_date
+            return start_date, end_date, first_data_date, last_data_date
 
         else:
             end_date, start_date = last_full_week(client_id)
-            return start_date, end_date, last_data_date
+            return start_date, end_date, first_data_date, last_data_date
 
     else:
         end_date, start_date = last_full_week(client_id)
-        return start_date, end_date, last_data_date
+        return start_date, end_date, first_data_date, last_data_date
 
 
 def client_select(get_request):

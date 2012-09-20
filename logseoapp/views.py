@@ -239,7 +239,7 @@ def get_ranks(request, page, start_date="", end_date=""):
     # client name
     client = Client.objects.values('name').filter(pk=client_id)
 
-    start_date, end_date, last_data_date = date_select(request.GET, client_id)
+    start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
     dates    = LogSeRank.objects.values('refdate').distinct()
 
     """
@@ -272,8 +272,10 @@ def get_ranks(request, page, start_date="", end_date=""):
                                          'refdate',
                                          Avg('position'))
 
+    largest_position = max(item['y'] for item in position_chart)
+
     # make ranks negative so lower ranks show higher on the chart
-    position_chart = [{"x":e['x'], "y":e['y'] * 1} for e in position_chart]
+    #position_chart = [{"x":e['x'], "y":e['y'] * -1} for e in position_chart]
     all_phrase   = process_time_series(all_phrase, start_date, end_date)
     rankphrase_chart  = process_time_series(rank_phrase, start_date, end_date)
 
@@ -282,7 +284,9 @@ def get_ranks(request, page, start_date="", end_date=""):
                                           'client_id': client_id,
                                           'start_date': start_date,
                                           'end_date': end_date,
+                                          'first_data_date': first_data_date,
                                           'last_data_date': last_data_date,
+                                          'largest_position': largest_position,
                                           'dates': dates,
                                           'page': page,
                                           'id': id,
@@ -302,7 +306,7 @@ def get_ranks_datatable(request, page):
 
     # client name
 
-    start_date, end_date, last_data_date = date_select(request.GET, client_id)
+    start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
     #prepare the params
 
@@ -361,7 +365,7 @@ def get_phrase(request, phrase):
     # client name
     client = Client.objects.values('name').filter(pk=client_id)
 
-    start_date, end_date, last_data_date = date_select(request.GET, client_id)
+    start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
     dates = LogSeRank.objects.values('refdate').distinct()
 
     """
@@ -415,7 +419,9 @@ def get_phrase(request, phrase):
     return render(request, 'phrase.html', {'dates': dates,
                                            'start_date': start_date,
                                            'end_date': end_date,
+                                           'first_data_date': first_data_date,
                                            'last_data_date': last_data_date,
+                                           #'largest_position': largest_position,
                                            'form': form,
                                            'ip_chart': ip_chart,
                                            'client': client,
