@@ -22,7 +22,11 @@ var my_date = new Date(my_year, my_month-1, my_day); //date.js advances one mont
 
 
 $('#reportrange').daterangepicker(
-            {
+        {
+    //format: 'dd-MM-yyyy',
+    startDate: '{{ start_date|date:"M d, Y" }}', 
+    //minDate: '-90 days', 
+    maxDate: my_date ,
     ranges: {
         'Last Day':     [my_date, my_date],
         'Last Day - 1': [new Date(my_year, my_month-1, my_day).add({ days: -1 }), new Date(my_year, my_month-1, my_day).add({ days: -1 })],

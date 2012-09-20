@@ -273,7 +273,7 @@ def get_ranks(request, page, start_date="", end_date=""):
                                          Avg('position'))
 
     # make ranks negative so lower ranks show higher on the chart
-    position_chart = [{"x":e['x'], "y":e['y'] * -1} for e in position_chart]
+    position_chart = [{"x":e['x'], "y":e['y'] * 1} for e in position_chart]
     all_phrase   = process_time_series(all_phrase, start_date, end_date)
     rankphrase_chart  = process_time_series(rank_phrase, start_date, end_date)
 
