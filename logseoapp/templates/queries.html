@@ -195,7 +195,7 @@ nv.addGraph(function() {
 	  
     chart.yAxis.tickFormat(d3.format(',.2f'));
 
-
+    chart.forceY([0]);
 
     d3.select('#chart svg')
     .datum(data())

@@ -195,13 +195,13 @@ def metrics_processing_row2(engine_list, client_id):
         metric_d['engine'] = engine['engine']
         query = LogSeRank.objects \
                          .values('phrase_id', 'phrase_id__phrase', 'phrase_id__first_seen') \
-                         .annotate(num_ips=Count('ip', distinct=True)) \
                          .filter(engine_id__engine__contains=engine['engine'],
                                  position__gt=engine['position'],
+                                 client_id=client_id,
                                  phrase_id__first_seen__range=[week_ago, latest_sunday],
-                                 client_id=client_id) \
-                         .order_by('-num_ips') \
-                         .distinct()
+                                 refdate__range=[week_ago, latest_sunday]) \
+                         .annotate(num_ips=Count('ip', distinct=True)) \
+                         .order_by('-num_ips')
 
         metric_d['query_result'] = query
         metric_d['query_cnt'] = query.count()

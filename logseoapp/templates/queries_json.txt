@@ -6,7 +6,7 @@
     {% for item in querySet %}
     [
 
-        "<a href='{{ item.phrase_id }}'>{{ item.phrase_id__phrase }}</a>",
+        "<a href='/queries/individual-query/{{ item.phrase_id }}'>{{ item.phrase_id__phrase }}</a>",
         "{{ item.num_ips }}",
         "{{ item.num_pages }}",
         "{{ item.num_engines }}"

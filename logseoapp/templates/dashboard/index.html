@@ -143,12 +143,12 @@
                     <tr><td>phrase</td><td>prior cnt</td></tr>
                     {% for dict in unique|slice:":5" %}
                     <tr>
-                        <td><a href="/phrase/{{dict.phrase_id}}/?end_date={{ latest_date|date:"Y-m-d" }}&start_date={{ week_ago|date:"Y-m-d" }}&client_list={{ client_id }}" style="text-decoration:none;">{{ dict.phrase }}</a></td>
+                        <td><a href="/queries/individual-query/{{dict.phrase_id}}/?end_date={{ latest_date|date:"Y-m-d" }}&start_date={{ week_ago|date:"Y-m-d" }}&client_list={{ client_id }}" style="text-decoration:none;">{{ dict.phrase }}</a></td>
                         <td></td>
                     </tr>
                     {% endfor %}
                 </table>
-                <p><a class="btn" href="#">View details &raquo;</a></p>
+                
             </div><!--/span-->
             <div class="span3">
                 <h2>Gaining Bigrams</h2>
@@ -161,7 +161,7 @@
                     {% endfor %}
 
                 </table>
-                <p><a class="btn" href="#">View details &raquo;</a></p>
+                
             </div><!--/span-->
             <div class="span3">
                 <h2>Losing Bigrams</h2>
@@ -173,7 +173,7 @@
                     </tr>
                     {% endfor %}
                 </table>
-                <p><a class="btn" href="#">View details &raquo;</a></p>
+                
             </div><!--/span-->
             <div class="span3">
                 <h2>Top Pages</h2>
@@ -185,7 +185,7 @@
                     </tr>
                     {% endfor %}
                 </table>
-                <p><a class="btn" href="#">View details &raquo;</a></p>
+                
             </div><!--/span-->
         </div><!--/row-->
     </div><!--/span-->
@@ -332,6 +332,6 @@ var hover = new Hover( { graph: graph } );
     {% endfor %}
 </script>
 
-
+{{ sql }}
 
 {% endblock %}

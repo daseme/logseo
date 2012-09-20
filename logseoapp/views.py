@@ -9,10 +9,10 @@ from utils.view import bigram_stats, process_time_series, get_datatables_records
 from logseoapp.models import LogSeRank, Kw, Page, Client
 from logseoapp.forms import ClientChoice
 from django.db.models import Avg, Count, StdDev, Min, Max
-# from django.db import connection
 from collections import defaultdict
 from operator import itemgetter
 import json
+from django.db import connection
 
 
 @login_required
@@ -99,12 +99,15 @@ def home(request, client_id=""):
                            .filter(client_id=client_id)\
                            .order_by('-num_ips').distinct()
 
+    sql = connection.queries
+
     return render(request, 'dashboard/index.html', {'form': form,
                                                     'client_id': client_id,
                                                     'metrics_row1_dict': metrics_row1_dict,
                                                     'metrics_row2_dict': metrics_row2_dict,
                                                     'client': client,
                                                     'unique': unique,
+                                                    'sql': sql,
                                                     'last_week': last_week,
                                                     'wk_bf_last': wk_bf_last,
                                                     'week_ago': week_ago,
@@ -141,11 +144,11 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
 
     data = metrics_processing_row2(metrics, client_id)
 
-    return render(request, 'dashboard/engine_detail.html', {'form': form,
-                                                            'client_id': client_id,
-                                                            'client': client,
-                                                            'week_ago': week_ago,
+    return render(request, 'dashboard/engine_detail.html', {'week_ago': week_ago,
                                                             'latest_date': latest_sunday,
+                                                            'form': form,
+                                                            'client': client,
+                                                            'client_id': client_id,
                                                             'data': data})
 
 
@@ -180,12 +183,13 @@ def get_queries(request):
     # make ranks negative so lower ranks show higher on the chart
     all_phrase = process_time_series(all_phrase, start_date, end_date)
 
-    return render(request, 'queries.html', {'form': form,
+    return render(request, 'queries.html', {'start_date': start_date,
+                                            'end_date': end_date,
+                                            'first_data_date': first_data_date,
+                                            'last_data_date': last_data_date,
+                                            'form': form,
                                             'client': client,
                                             'client_id': client_id,
-                                            'start_date': start_date,
-                                            'end_date': end_date,
-                                            'last_data_date': last_data_date,
                                             'all_phrase': all_phrase})
 
 
@@ -276,13 +280,13 @@ def get_ranks(request, page, start_date="", end_date=""):
     all_phrase   = process_time_series(all_phrase, start_date, end_date)
     rankphrase_chart  = process_time_series(rank_phrase, start_date, end_date)
 
-    return render(request, 'ranks.html', {'form': form,
-                                          'client': client,
-                                          'client_id': client_id,
-                                          'start_date': start_date,
+    return render(request, 'ranks.html', {'start_date': start_date,
                                           'end_date': end_date,
                                           'first_data_date': first_data_date,
                                           'last_data_date': last_data_date,
+                                          'form': form,
+                                          'client': client,
+                                          'client_id': client_id,
                                           'largest_position': largest_position,
                                           'page': page,
                                           'id': id,
@@ -366,7 +370,7 @@ def get_phrase(request, phrase):
     """
     unique view code
     """
-    phrase_name = Kw.objects.values('id', 'phrase').filter(pk=phrase)
+    phrase_name = Kw.objects.values('id', 'phrase', 'first_seen', 'last_seen').filter(pk=phrase)
 
     rank_ts = LogSeRank.objects \
                        .values('position', 'refdate') \
@@ -376,7 +380,7 @@ def get_phrase(request, phrase):
                        .order_by('refdate')
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
-    rankings_chart = [{"x":e['x'], "y":e['y'] * -1} for e in rankings_chart]
+    largest_position = max(item['y'] for item in rankings_chart)
 
     rankings = LogSeRank.objects \
                         .values('position') \
@@ -386,14 +390,14 @@ def get_phrase(request, phrase):
                         .order_by('refdate')
 
     ip_ts = LogSeRank.objects \
-                     .values('refdate') \
-                     .filter(refdate__range=[start_date, end_date],
-                             phrase_id=phrase,
-                             client_id=client_id) \
-                     .annotate(num_ips=Count('ip', distinct=True)) \
+                     .values('refdate', 'ip') \
+                     .filter(phrase_id=phrase,
+                             client_id=client_id,
+                             refdate__range=[start_date, end_date]) \
                      .order_by('refdate')
 
-    ip_chart = process_time_series(ip_ts, start_date, end_date)
+    ip_chart = process_time_series(ip_ts, start_date, end_date, 'refdate',
+                                   Count('ip', distinct=True))
 
     ip_chart = json.dumps(ip_chart, sort_keys=True)
 
@@ -415,14 +419,14 @@ def get_phrase(request, phrase):
                                            'end_date': end_date,
                                            'first_data_date': first_data_date,
                                            'last_data_date': last_data_date,
-                                           #'largest_position': largest_position,
                                            'form': form,
-                                           'ip_chart': ip_chart,
                                            'client': client,
                                            'client_id': client_id,
+                                           'ip_chart': ip_chart,
                                            'phrase_name': phrase_name,
                                            'rankings': rankings,
                                            'rankings_chart': rankings_chart,
+                                           'largest_position': largest_position,
                                            'pages': pages})
 
 
@@ -485,6 +489,7 @@ def get_landing_pages(request, start_date="", end_date=""):
 
     return render(request, 'landing_pages.html', {'start_date': start_date,
                                                   'end_date': end_date,
+                                                  'first_data_date': first_data_date,
                                                   'last_data_date': last_data_date,
                                                   'form': form,
                                                   'client': client,
@@ -523,9 +528,7 @@ def get_page(request, page):
                         .order_by('refdate')
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
-
-    # negative rank hack until i can reverse y2axis
-    rankings_chart = [{"x":e['x'], "y":e['y'] * -1} for e in rankings_chart]
+    largest_position = max(item['y'] for item in rankings_chart)
 
     ip_ts = LogSeRank.objects \
                      .values('refdate') \
@@ -565,11 +568,14 @@ def get_page(request, page):
 
     return render(request, 'page.html', {'start_date': start_date,
                                          'end_date': end_date,
+                                         'first_data_date': first_data_date,
                                          'last_data_date': last_data_date,
                                          'form': form,
                                          'client': client,
+                                         'client_id': client_id,
                                          'ip_chart': ip_chart,
                                          'rankings_chart': rankings_chart,
+                                         'largest_position': largest_position,
                                          'page_name': page_name,
                                          'kws': combo})
 

@@ -160,8 +160,8 @@ $(document).ready(function() {
                 <tbody>
                     <tr>
                         <td>{{ phrase_name.0.phrase }}</td>
-                        <td>na</td>
-                        <td>na</td>
+                        <td>{{ phrase_name.0.first_seen }}</td>
+                        <td>{{ phrase_name.0.last_seen }}</td>
                         <td>na</td>
                     </tr>
             </table>
@@ -242,12 +242,16 @@ nv.addGraph(function() {
 
     chart.y2Axis.tickFormat(d3.format(',.2f'));
 
+    chart.bars.forceY([0]);
+
+    // reverses the domain for ranks so low rank appears higher
+    chart.lines.yDomain([{{ largest_position }},1]);
+
     d3.select('#chart svg')
     .datum(data())
     .transition().duration(500)
     .call(chart);
 
-    chart.bars.forceY([0]);
     nv.utils.windowResize(chart.update);
  
     return chart;
