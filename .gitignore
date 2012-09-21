@@ -10,3 +10,4 @@ access.*
 fixtures/*.json
 logseo/local_settings.py
 logseo/static/*
+filesofgit.txt
