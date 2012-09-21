@@ -1,23 +1,23 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-
+{% load static from staticfiles %}
 <html>
     <head>
         <title>Logseo - {{ client.0.name }}</title>
-        <link href="/static/css/bootstrap/css/bootstrap.css" rel="stylesheet" />
-        <link href="/static/css/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />
-        <link href="/static/css/complete.css" rel="stylesheet" />
-        <link href="/static/css/daterangepicker.css" rel="stylesheet">
-        <link href="/static/css/rickshaw.css" rel="stylesheet" />
-        <link href="/static/css/nv.d3.css" rel="stylesheet" />
-        <link href="/static/css/daterangepicker.css" rel="stylesheet">
+        <link href="{% static "css/bootstrap/css/bootstrap.css" %}" rel="stylesheet" />
+        <link href="{% static "css/bootstrap/css/bootstrap-responsive.min.css" %}" rel="stylesheet" />
+        <link href="{% static "css/complete.css" %}" rel="stylesheet" />
+        <link href="{% static "css/daterangepicker.css" %}" rel="stylesheet">
+        <link href="{% static "css/rickshaw.css" %}" rel="stylesheet" />
+        <link href="{% static "css/nv.d3.css" %}" rel="stylesheet" />
+        <link href="{% static "css/daterangepicker.css" %}" rel="stylesheet">
 
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
-        <script src="/static/css/bootstrap/js/bootstrap.min.js"></script>
-        <script src="/media/d3.v2.min.js"></script>
-        <script src="/media/nv.d3.min.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/media/plugins/DataTables-1.9.1/media/js/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/media/plugins/bootstrap-daterangepicker/date.js"></script>
-        <script type="text/javascript" charset="utf-8" src="/media/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js" type="text/javascript"></script>
+        <script src="{% static "css/bootstrap/js/bootstrap.min.js" %}"></script>
+        <script src="{% static "js/d3.v2.min.js" %}"></script>
+        <script src="{% static "js/nv.d3.min.js" %}"></script>
+        <script type="text/javascript" charset="utf-8" src="{% static "js/plugins/DataTables-1.9.1/media/js/jquery.dataTables.min.js" %}"></script>
+        <script type="text/javascript" charset="utf-8" src="{% static "js/plugins/bootstrap-daterangepicker/date.js" %}"></script>
+        <script type="text/javascript" charset="utf-8" src="{% static "js/plugins/bootstrap-daterangepicker/daterangepicker.js" %}"></script>
 
 
 
