@@ -12,3 +12,4 @@ logseo/local_settings.py
 logseo/static/*
 filesofgit.txt
 logseoapp/tests/*
+ko-install-notes.txt
