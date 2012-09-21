@@ -1,0 +1,212 @@
+/*
+ * Colour dictionary:
+ *
+ * Table control elements:   #719ba7
+ * Header cells:             #66A9BD
+ * Body header cells:        #91c5d4
+ * Body content cells:       #d5eaf0
+ * Body content cells (alt): #bcd9e1
+ * Footer header:            #b0cc7f
+ * Footer content:           #d7e1c5
+ */
+
+
+/*
+ * Page setup styles
+ */
+h2 {
+    font-size: 30px;
+
+}
+h2 {
+    font-size: 24px;
+    line-height: 36px;
+}
+.page-header h1 {
+    line-height: 1;
+}
+label, input, button, select, textarea {
+    line-height: 18px;
+}
+select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
+    border-radius: 3px 3px 3px 3px;
+    color: #555555;
+    display: inline-block;
+    font-size: 13px;
+    height: 18px;
+    line-height: 18px;
+    margin-bottom: 9px;
+    padding: 4px 6px;
+}
+
+/* nav stuff */
+.navbar {
+    background-color:#4F4233;
+    background-image: none;
+
+}
+.navbar .brand {
+    color:#999999;
+    text-shadow:none;
+}
+.navbar-inner {
+    background-color:#4F4233;
+    background-image: none;
+
+}
+.navbar .nav > li > a {
+    background-color: transparent;
+    color: #999999;
+    text-decoration: none;
+    text-shadow: none;
+    padding: 9px 10px 11px;
+
+}
+.navbar .nav > li > a:hover {
+    color: #ffffff;
+    float: none;
+    line-height: 19px;
+    padding: 9px 10px 11px;
+    text-decoration: none;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+.navbar .nav > .active > a, .navbar .nav > .active > a:hover, .navbar .nav > .active > a:focus {
+    background-color: #948C75;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+.well {
+    background-color:#C5D0C3;
+}
+.nav-list > .active > a, .nav-list > .active > a:hover {
+    background-color:  #D4CFAF;
+    color:#123142;
+}
+
+.page-header {
+    #background-color:#E9F0C9;
+}
+
+
+body {
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 13px;
+    line-height: 18px;
+	margin: 0;
+	padding: 0;
+	/*color: #673C0A;*/
+    color:#2e2633;
+	background-color: #F5F9E6;
+}
+a {
+    color:#3D6672;
+}
+#container {
+	margin: 40px auto;
+	width: 980px
+}
+.DTTT_container {
+	float:right;
+}
+
+
+
+
+/*
+ * DataTables framework
+ */
+
+
+div.dataTables_length label {
+	float: left;
+	text-align: left;
+
+}
+
+div.dataTables_length select {
+	width: 75px;
+
+}
+
+div.dataTables_filter label {
+	float: right;
+}
+
+div.dataTables_info {
+	padding-top: 8px;
+}
+
+div.dataTables_paginate {
+	float: right;
+	margin: 0;
+}
+
+table.table {
+	clear: both;
+	margin-bottom: 6px !important;
+}
+
+table.table thead .sorting,
+table.table thead .sorting_asc,
+table.table thead .sorting_desc,
+table.table thead .sorting_asc_disabled,
+table.table thead .sorting_desc_disabled {
+	cursor: pointer;
+	*cursor: hand;
+}
+
+table.table thead .sorting { background: url('/static/images/sort_both.png') no-repeat center right; }
+table.table thead .sorting_asc { background: url('/static/images/sort_asc.png') no-repeat center right; }
+table.table thead .sorting_desc { background: url('/static/images/sort_desc.png') no-repeat center right; }
+
+table.table thead .sorting_asc_disabled { background: url('/static/images/sort_asc_disabled.png') no-repeat center right; }
+table.table thead .sorting_desc_disabled { background: url('/static/images/sort_desc_disabled.png') no-repeat center right; }
+
+table.dataTable th:active {
+	outline: none;
+}
+/*
+ * Pagination
+ */
+span.paginate_button,
+span.paginate_active {
+	display: inline-block;
+	background-color: #E9F0C9;
+	padding: 2px 6px;
+	margin-left: 2px;
+	cursor: pointer;
+	*cursor: hand;
+}
+
+a.paginate_button,
+a.paginate_active {
+	display: inline-block;
+	background-color: #E9F0C9;
+	padding: 2px 6px;
+	margin-left: 2px;
+	cursor: pointer;
+	*cursor: hand;
+}
+
+a.paginate_active {
+	background-color: transparent;
+	border: 1px solid black;
+}
+
+a.paginate_button_disabled {
+	color: #3d6672;
+}
+
+a.dataTables_paginate span>span {
+	width: 15px;
+	text-align: center;
+}
+/* Header cells */
+ .table thead th {
+	text-align: center;
+	background: #E9F0C9;
+
+.table.table thead .sorting {
+    background: none;
+     background-color:#E9F0C9;
+}
