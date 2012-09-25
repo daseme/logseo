@@ -12,7 +12,7 @@ from django.db.models import Avg, Count, StdDev, Min, Max
 from collections import defaultdict
 from operator import itemgetter
 import json
-from django.db import connection
+#from django.db import connection
 
 
 @login_required
@@ -99,15 +99,12 @@ def home(request, client_id=""):
                            .filter(client_id=client_id)\
                            .order_by('-num_ips').distinct()
 
-    sql = connection.queries
-
     return render(request, 'dashboard/index.html', {'form': form,
                                                     'client_id': client_id,
                                                     'metrics_row1_dict': metrics_row1_dict,
                                                     'metrics_row2_dict': metrics_row2_dict,
                                                     'client': client,
                                                     'unique': unique,
-                                                    'sql': sql,
                                                     'last_week': last_week,
                                                     'wk_bf_last': wk_bf_last,
                                                     'week_ago': week_ago,
@@ -216,7 +213,7 @@ def get_queries_datatable(request):
                         .annotate(num_ips=Count('ip', distinct=True),
                                   num_pages=Count('page_id', distinct=True),
                                   num_engines=Count('engine_id', distinct=True)) \
-                        .order_by('phrase_id__phrase')
+                        .order_by('phrase_id__phrase') \
 
     #columnIndexNameMap is required for correct sorting behavior
     columnIndexNameMap = {0: 'phrase_id__phrase', 1: 'num_ips', 2: 'num_pages', 3: 'num_engines'}
@@ -228,7 +225,7 @@ def get_queries_datatable(request):
 
 
 def get_ranks(request, page, start_date="", end_date=""):
-    """ get rank data for kws, default dates set in date_select() fx """
+    """ get rank data for kws or landing pages, default dates set in date_select() fx """
 
     """
     common code that needs to learn abotu DRY
@@ -243,42 +240,34 @@ def get_ranks(request, page, start_date="", end_date=""):
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
+    if page == 'queries':
+        object_id = 'phrase_id'
+
+    else:
+        object_id = 'page_id'
+
     """
     unique view code
     """
 
-    """
-    chart / time series data
-    """
-    all_phrase = LogSeRank.objects \
-                          .values('id', 'phrase_id', 'refdate') \
-                          .filter(client_id=client_id) \
-                          .distinct()
-
-    rank_phrase = LogSeRank.objects \
-                           .values('phrase_id', 'refdate') \
+    rank_objects = LogSeRank.objects \
                            .filter(position__gt=0,
-                                   client_id=client_id) \
-                           .distinct()
-
-    position_ts = LogSeRank.objects \
-                           .values('position', 'refdate') \
-                           .filter(position__gt=0,
-                                   refdate__range=[start_date, end_date],
                                    client_id=client_id)
 
-    position_chart = process_time_series(position_ts,
+    position_chart = process_time_series(rank_objects,
                                          start_date,
                                          end_date,
                                          'refdate',
                                          Avg('position'))
 
+    # for setting domain of chart
     largest_position = max(item['y'] for item in position_chart)
 
-    # make ranks negative so lower ranks show higher on the chart
-    #position_chart = [{"x":e['x'], "y":e['y'] * -1} for e in position_chart]
-    all_phrase   = process_time_series(all_phrase, start_date, end_date)
-    rankphrase_chart  = process_time_series(rank_phrase, start_date, end_date)
+    object_chart  = process_time_series(rank_objects,
+                                        start_date,
+                                        end_date,
+                                        'refdate',
+                                        Count(object_id, distinct=True))
 
     return render(request, 'ranks.html', {'start_date': start_date,
                                           'end_date': end_date,
@@ -289,9 +278,7 @@ def get_ranks(request, page, start_date="", end_date=""):
                                           'client_id': client_id,
                                           'largest_position': largest_position,
                                           'page': page,
-                                          'id': id,
-                                          'rankphrase_chart': rankphrase_chart,
-                                          'all_phrase': all_phrase,
+                                          'object_chart': object_chart,
                                           'position_chart': position_chart})
 
 
@@ -373,13 +360,13 @@ def get_phrase(request, phrase):
     phrase_name = Kw.objects.values('id', 'phrase', 'first_seen', 'last_seen').filter(pk=phrase)
 
     rank_ts = LogSeRank.objects \
-                       .values('position', 'refdate') \
                        .filter(phrase_id=phrase,
                                position__gt=0,
-                               refdate__range=[start_date, end_date]) \
-                       .order_by('refdate')
+                               refdate__range=[start_date, end_date])
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
+
+    # for setting domain of chart
     largest_position = max(item['y'] for item in rankings_chart)
 
     rankings = LogSeRank.objects \
@@ -390,7 +377,6 @@ def get_phrase(request, phrase):
                         .order_by('refdate')
 
     ip_ts = LogSeRank.objects \
-                     .values('refdate', 'ip') \
                      .filter(phrase_id=phrase,
                              client_id=client_id,
                              refdate__range=[start_date, end_date]) \

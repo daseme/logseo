@@ -2,7 +2,7 @@
 {% load static from staticfiles %}
 <html>
     <head>
-        <title>Logseo - {{ client.0.name }}</title>
+        <title>%{log-SEO} - {{ client.0.name }}</title>
         <link href="{% static "css/bootstrap/css/bootstrap.css" %}" rel="stylesheet" />
         <link href="{% static "css/bootstrap/css/bootstrap-responsive.min.css" %}" rel="stylesheet" />
         <link href="{% static "css/complete.css" %}" rel="stylesheet" />
@@ -48,7 +48,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </a>
-            <a class="brand" href="/">LOGseO</a>    
+            <a class="brand" href="/">logSEO</a>    
              <div class="nav-collapse collapse">
                 <ul class="nav">      
                     <li {% if request.path = '/' %} class="active"{% endif %}><a href="/">Home</a></li>

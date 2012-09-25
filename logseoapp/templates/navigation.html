@@ -6,10 +6,9 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </a>
-            <a class="brand" href="/">LOGseO</a>
+            <a class="brand" href="/">%{LogSEO}</a>
             <div class="btn-group pull-right">
-                <a class="btn dropdown-toggle" href=".">
-                    <i class="caret"></i> Change Client
+                <a class="btn dropdown-toggle" href="."><i class="caret"></i> Change Client
                     <form method='get'>
                         {% csrf_token %}
                         {{ form.client_list|as_bootstrap }}
@@ -17,10 +16,8 @@
                             <button type="submit" class="btn primary">Submit</button>
                         </div>
                     </form>
-
                 </a>
-                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                    <i class="icon-user"></i> Username
+                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-user"></i> Username
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu">
