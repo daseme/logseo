@@ -173,9 +173,7 @@ def get_queries(request):
     chart / time series data
     """
     all_phrase = LogSeRank.objects \
-                          .values('id', 'phrase_id', 'refdate') \
                           .filter(client_id=client_id) \
-                          .distinct()
 
     # make ranks negative so lower ranks show higher on the chart
     all_phrase = process_time_series(all_phrase, start_date, end_date)
@@ -357,7 +355,7 @@ def get_phrase(request, phrase):
     """
     unique view code
     """
-    phrase_name = Kw.objects.values('id', 'phrase', 'first_seen', 'last_seen').filter(pk=phrase)
+    phrase_name = Kw.objects.filter(pk=phrase)
 
     rank_ts = LogSeRank.objects \
                        .filter(phrase_id=phrase,
@@ -504,25 +502,21 @@ def get_page(request, page):
     unique view code
     """
 
-    page_name = Page.objects.values('id', 'page').filter(pk=page)
+    page_name = Page.objects.filter(pk=page)
 
     rank_ts  = LogSeRank.objects \
-                        .values('position', 'refdate') \
                         .filter(page_id=page,
                                 position__gt=0,
-                                refdate__range=[start_date, end_date]) \
-                        .order_by('refdate')
+                                refdate__range=[start_date, end_date])
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
     largest_position = max(item['y'] for item in rankings_chart)
 
     ip_ts = LogSeRank.objects \
-                     .values('refdate') \
                      .filter(refdate__range=[start_date, end_date],
                              page_id=page,
                              client_id=client_id) \
-                     .annotate(num_ips=Count('ip', distinct=True)) \
-                     .order_by('refdate')
+                     .annotate(num_ips=Count('ip', distinct=True))
 
     ip_chart = process_time_series(ip_ts, start_date, end_date)
 
