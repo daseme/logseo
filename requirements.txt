@@ -1,10 +1,10 @@
-apachelog # used for custom management command to parse logs and load db
+apachelog==1.1 # used for custom management command to parse logs and load db
 Django==1.4
 django-qsstats-magic==0.7.1 #django-qsstats-magic, in installed apps as qsstats
-South==0.7.6
+south==0.7.6
 django-taggit  #
 python-memcached
 johnny-cache==1.4
-numpy
-nltk
+numpy==1.6.2
+nltk==2.0.1
 
