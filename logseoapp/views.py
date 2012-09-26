@@ -174,8 +174,11 @@ def get_queries(request):
     """
     all_phrase = LogSeRank.objects.filter(client_id=client_id)
 
-    # make ranks negative so lower ranks show higher on the chart
     all_phrase = process_time_series(all_phrase, start_date, end_date)
+
+    all_phrase_cnt = sum(item['y'] for item in all_phrase)
+
+    all_phrase_avg = round(all_phrase_cnt / len(all_phrase))
 
     return render(request, 'queries.html', {'start_date': start_date,
                                             'end_date': end_date,
@@ -184,7 +187,9 @@ def get_queries(request):
                                             'form': form,
                                             'client': client,
                                             'client_id': client_id,
-                                            'all_phrase': all_phrase})
+                                            'all_phrase': all_phrase,
+                                            'all_phrase_cnt': all_phrase_cnt,
+                                            'all_phrase_avg': all_phrase_avg})
 
 
 def get_queries_datatable(request):

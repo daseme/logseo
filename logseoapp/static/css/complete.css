@@ -109,8 +109,24 @@ a {
 	float:right;
 }
 
-
-
+/*
+ * Chart Stuff
+ */
+.sidestat {
+    margin: 0 0 10px 0;
+    padding: 0 0 10px 0;
+    border: 1px solid #E9F0C9;
+    background-color:#f9f9f9;
+    text-align:center;
+}
+.sidestat .number {
+    color:#948C75;
+    font-size:28px;
+    font-weight:bold;
+}
+.sidestat h4 {
+    color:#aaa;
+}
 
 /*
  * DataTables framework

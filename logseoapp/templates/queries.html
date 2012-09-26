@@ -153,9 +153,19 @@ $(document).ready(function() {
 
     <div class="row">
         <div class="span12">
-            <div id="chart"><svg style="height: 200px;"></svg></div>
+            <div class="row">
+                <div class="span10">
+                    <div id="chart"><svg style="height: 200px;"></svg></div>
+                </div>
+                <div class="span2">
+                    <div class="sidestat"><h4># Queries</h4><span class="number">{{ all_phrase_cnt }}</span></div>
+                </div>
+                <div class="span2">
+                    <div class="sidestat"><h4>Avg Queries</h4><span class="number">{{ all_phrase_avg }}</span></div>
+                </div>
+            </div>
         </div>
-    <div>
+    </div>
 
 <div class="row">
     <div class="span12">
