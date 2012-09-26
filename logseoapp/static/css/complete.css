@@ -112,6 +112,10 @@ a {
 /*
  * Chart Stuff
  */
+
+.row .chart {
+    padding-bottom:40px;
+}
 .sidestat {
     margin: 0 0 10px 0;
     padding: 0 0 10px 0;
@@ -132,7 +136,18 @@ a {
  * DataTables framework
  */
 
-
+.dataTables_processing {
+    position: absolute;
+    top: 0px;
+    left: 50%;
+    width: 250px;
+    margin-left: -125px;
+    border: 1px solid #ddd;
+    text-align: center;
+    color: #999;
+    font-size: 11px;
+    padding: 2px 0;
+}
 div.dataTables_length label {
 	float: left;
 	text-align: left;

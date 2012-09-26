@@ -174,7 +174,11 @@ def get_queries(request):
     """
     all_phrase = LogSeRank.objects.filter(client_id=client_id)
 
-    all_phrase = process_time_series(all_phrase, start_date, end_date)
+    all_phrase = process_time_series(all_phrase,
+                                     start_date,
+                                     end_date,
+                                     'refdate',
+                                     Count('phrase_id', distinct=True))
 
     all_phrase_cnt = sum(item['y'] for item in all_phrase)
 
@@ -244,9 +248,11 @@ def get_ranks(request, page, start_date="", end_date=""):
 
     if page == 'queries':
         object_id = 'phrase_id'
+        page_name = 'Queries'
 
     else:
         object_id = 'page_id'
+        page_name = 'Pages'
 
     """
     unique view code
@@ -260,6 +266,10 @@ def get_ranks(request, page, start_date="", end_date=""):
                                          'refdate',
                                          Avg('position'))
 
+    all_pos_cnt = round(sum(item['y'] for item in position_chart))
+
+    all_page_avg = round(all_pos_cnt / len(position_chart))
+
     # for setting domain of chart
     largest_position = max(item['y'] for item in position_chart)
 
@@ -269,6 +279,8 @@ def get_ranks(request, page, start_date="", end_date=""):
                                         'refdate',
                                         Count(object_id, distinct=True))
 
+    all_page_cnt = round(sum(item['y'] for item in object_chart))
+
     return render(request, 'ranks.html', {'start_date': start_date,
                                           'end_date': end_date,
                                           'first_data_date': first_data_date,
@@ -277,9 +289,12 @@ def get_ranks(request, page, start_date="", end_date=""):
                                           'client': client,
                                           'client_id': client_id,
                                           'largest_position': largest_position,
+                                          'page_name': page_name,
                                           'page': page,
                                           'object_chart': object_chart,
-                                          'position_chart': position_chart})
+                                          'position_chart': position_chart,
+                                          'all_page_cnt': all_page_cnt,
+                                          'all_page_avg': all_page_avg})
 
 
 def get_ranks_datatable(request, page):
@@ -432,8 +447,7 @@ def get_landing_pages(request, start_date="", end_date=""):
     landing_pages = LogSeRank.objects \
                              .values('page_id', 'page_id__page') \
                              .filter(refdate__range=[start_date, end_date],
-                                     client_id=client_id) \
-                             .distinct()
+                                     client_id=client_id)
 
     gcount        = landing_pages.filter(engine_id__engine__contains='Google') \
                                  .annotate(num_google=Count('engine_id'))
@@ -463,8 +477,17 @@ def get_landing_pages(request, start_date="", end_date=""):
     chart / time series data
     """
 
-    t_series = process_time_series(landing_pages, start_date, end_date)
-    t_series = json.dumps(t_series, sort_keys=True)
+    all_page = process_time_series(landing_pages,
+                                   start_date,
+                                   end_date,
+                                   'refdate',
+                                   Count('page_id', distinct=True))
+
+    all_page_cnt = sum(item['y'] for item in all_page)
+
+    all_page_avg = round(all_page_cnt / len(all_page))
+
+    all_page = json.dumps(all_page, sort_keys=True)
 
     return render(request, 'landing_pages.html', {'start_date': start_date,
                                                   'end_date': end_date,
@@ -474,7 +497,9 @@ def get_landing_pages(request, start_date="", end_date=""):
                                                   'client': client,
                                                   'client_id': client_id,
                                                   'combo': combo,
-                                                  't_series': t_series})
+                                                  'all_page': all_page,
+                                                  'all_page_cnt': all_page_cnt,
+                                                  'all_page_avg': all_page_avg})
 
 
 def get_page(request, page):

@@ -141,9 +141,17 @@ $(document).ready(function() {
         </div>
     <div class="row">
         <div class="span12">
-
-                <div id="chart"><svg style="height: 200px;"></svg></div>
-
+            <div class="row chart">
+                <div class="span10">
+                    <div id="chart"><svg style="height: 200px;"></svg></div>
+                </div>
+                <div class="span2">
+                    <div class="sidestat"><h4># Pages</h4><span class="number">{{ all_page_cnt }}</span></div>
+                </div>
+                <div class="span2">
+                    <div class="sidestat"><h4>Avg Pages</h4><span class="number">{{ all_page_avg }}</span></div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row">
@@ -227,7 +235,7 @@ function data() {
     return [
 
   {
-      "values": {{ t_series|safe }},
+      "values": {{ all_page|safe }},
       "key": "Landing Pages",
       "color": "#E9967A"
   }
