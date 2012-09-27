@@ -23,6 +23,7 @@ stats and time-series data for exploring your keyword traffic.
 
 ## Planned Features: ##
 
+-   Watchlist - select search queries and/or landing pages to 'watch'
 -   Google Analytics data integration (in progress)
 -   Auto-clustering/tagging of keyword data
 
@@ -40,6 +41,12 @@ The app is broken down into several main parts.
 ### Quickstart: ###
 
 Download django-logseo and install as you would any Django project
+
+Get nltk stopwords corpus:
+
+$ python
+>> import nltk
+>> nltk.download('stopwords')
 
 Drop some log files into logseoapp/management/commands/logs
 
