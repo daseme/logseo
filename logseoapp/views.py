@@ -59,15 +59,15 @@ def home(request, client_id=""):
                                .count()
 
     # keep all in wk_bf_last if not in last_week
-    unique         = [{'phrase':x['phrase'], 'phrase_id':x['id']}
-                      for x in wk_bf_last
-                      if x not in last_week]
+    missing_queries = [{'phrase':x['phrase'], 'phrase_id':x['id']}
+                       for x in wk_bf_last
+                       if x not in last_week]
 
-    unique_cnt     = len(unique)
+    missing_queries_cnt = len(missing_queries)
 
     missing_queries_txt = """There were %d kws 2 wks ago, and %d kws last week,
                            below are 5 of the %d kws that were missing from the prev wk""" \
-                          % (wk_bf_last_cnt, last_week_cnt, unique_cnt)
+                          % (wk_bf_last_cnt, last_week_cnt, missing_queries_cnt)
 
     """
     bigram data
@@ -102,8 +102,8 @@ def home(request, client_id=""):
                                                     'latest_date': latest_sunday,
                                                     'metrics_row1_dict': metrics_row1_dict,
                                                     'metrics_row2_dict': metrics_row2_dict,
-                                                    'unique': unique,
                                                     'missing_queries_txt': missing_queries_txt,
+                                                    'missing_queries': missing_queries,
                                                     'bigram_gainers': bigram_gainers,
                                                     'bigram_losers': bigram_losers,
                                                     'pages_query': pages_query})
