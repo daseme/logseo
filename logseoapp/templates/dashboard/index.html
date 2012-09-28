@@ -138,8 +138,7 @@
         <div class="row-fluid">
             <div class="span3">
                 <h2>Missing Queries</h2>
-                <p>There were {{ wk_bf_last_cnt }} kws 2 wks ago, and {{ last_week_cnt }} kws last week</p>
-                <p>below are 5 of the {{ unique_cnt }} kws that were missing from the prev wk</p>
+                {{ missing_queries_txt }}
                 <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
                     <tr><td>phrase</td><td>prior cnt</td></tr>
                     {% for dict in unique|slice:":5" %}

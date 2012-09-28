@@ -24,7 +24,7 @@ def home(request, client_id=""):
 
     # latest week in our db
     latest_sunday, week_ago = last_full_week(client_id)
-    two_wks_ago    = latest_sunday - timedelta(days=13)
+    two_wks_ago = latest_sunday - timedelta(days=13)
 
     # row 1 metrics
     metrics_row1 = [{'field':'ip', 'metric_name':'Organic Visitors'},
@@ -65,6 +65,10 @@ def home(request, client_id=""):
 
     unique_cnt     = len(unique)
 
+    missing_queries_txt = """There were %d kws 2 wks ago, and %d kws last week,
+                           below are 5 of the %d kws that were missing from the prev wk""" \
+                          % (wk_bf_last_cnt, last_week_cnt, unique_cnt)
+
     """
     bigram data
     """
@@ -94,16 +98,12 @@ def home(request, client_id=""):
                            .order_by('-num_ips').distinct()
 
     return render(request, 'dashboard/index.html', {'client_id': client_id,
+                                                    'week_ago': week_ago,
+                                                    'latest_date': latest_sunday,
                                                     'metrics_row1_dict': metrics_row1_dict,
                                                     'metrics_row2_dict': metrics_row2_dict,
                                                     'unique': unique,
-                                                    'last_week': last_week,
-                                                    'wk_bf_last': wk_bf_last,
-                                                    'week_ago': week_ago,
-                                                    'latest_date': latest_sunday,
-                                                    'last_week_cnt': last_week_cnt,
-                                                    'wk_bf_last_cnt': wk_bf_last_cnt,
-                                                    'unique_cnt': unique_cnt,
+                                                    'missing_queries_txt': missing_queries_txt,
                                                     'bigram_gainers': bigram_gainers,
                                                     'bigram_losers': bigram_losers,
                                                     'pages_query': pages_query})
@@ -128,9 +128,9 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
 
     data = metrics_processing_row2(metrics, client_id)
 
-    return render(request, 'dashboard/engine_detail.html', {'week_ago': week_ago,
+    return render(request, 'dashboard/engine_detail.html', {'client_id': client_id,
+                                                            'week_ago': week_ago,
                                                             'latest_date': latest_sunday,
-                                                            'client_id': client_id,
                                                             'data': data})
 
 
@@ -164,11 +164,11 @@ def get_queries(request):
 
     all_phrase_avg = round(all_phrase_cnt / len(all_phrase))
 
-    return render(request, 'queries.html', {'start_date': start_date,
+    return render(request, 'queries.html', {'client_id': client_id,
+                                            'start_date': start_date,
                                             'end_date': end_date,
                                             'first_data_date': first_data_date,
                                             'last_data_date': last_data_date,
-                                            'client_id': client_id,
                                             'all_phrase': all_phrase,
                                             'all_phrase_cnt': all_phrase_cnt,
                                             'all_phrase_avg': all_phrase_avg})
@@ -252,11 +252,11 @@ def get_ranks(request, page, start_date="", end_date=""):
 
     all_page_cnt = round(sum(item['y'] for item in object_chart))
 
-    return render(request, 'ranks.html', {'start_date': start_date,
+    return render(request, 'ranks.html', {'client_id': client_id,
+                                          'start_date': start_date,
                                           'end_date': end_date,
                                           'first_data_date': first_data_date,
                                           'last_data_date': last_data_date,
-                                          'client_id': client_id,
                                           'largest_position': largest_position,
                                           'page_name': page_name,
                                           'page': page,
@@ -371,11 +371,11 @@ def get_phrase(request, phrase):
     #pages = list(pages)
     #pages = [ e['position'] = 'na' for e in pages if e['position'] = 0 ]
 
-    return render(request, 'phrase.html', {'start_date': start_date,
+    return render(request, 'phrase.html', {'client_id': client_id,
+                                           'start_date': start_date,
                                            'end_date': end_date,
                                            'first_data_date': first_data_date,
                                            'last_data_date': last_data_date,
-                                           'client_id': client_id,
                                            'ip_chart': ip_chart,
                                            'phrase_name': phrase_name,
                                            'rankings': rankings,
@@ -444,11 +444,11 @@ def get_landing_pages(request, start_date="", end_date=""):
 
     all_page = json.dumps(all_page, sort_keys=True)
 
-    return render(request, 'landing_pages.html', {'start_date': start_date,
+    return render(request, 'landing_pages.html', {'client_id': client_id,
+                                                  'start_date': start_date,
                                                   'end_date': end_date,
                                                   'first_data_date': first_data_date,
                                                   'last_data_date': last_data_date,
-                                                  'client_id': client_id,
                                                   'combo': combo,
                                                   'all_page': all_page,
                                                   'all_page_cnt': all_page_cnt,
@@ -507,11 +507,11 @@ def get_page(request, page):
             d[elem['phrase_id']].update(elem)
     combo = d.values()
 
-    return render(request, 'page.html', {'start_date': start_date,
+    return render(request, 'page.html', {'client_id': client_id,
+                                         'start_date': start_date,
                                          'end_date': end_date,
                                          'first_data_date': first_data_date,
                                          'last_data_date': last_data_date,
-                                         'client_id': client_id,
                                          'ip_chart': ip_chart,
                                          'rankings_chart': rankings_chart,
                                          'largest_position': largest_position,
