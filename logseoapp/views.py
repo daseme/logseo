@@ -137,17 +137,10 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
 def get_queries(request):
     """ get rank data for kws, default dates set in date_select() fx """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
-
-    """
-    unique view code
-    """
 
     """
     chart / time series data
@@ -177,9 +170,6 @@ def get_queries(request):
 def get_queries_datatable(request):
     """ produces the datatable section of get_queries """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
@@ -209,9 +199,6 @@ def get_queries_datatable(request):
 def get_ranks(request, page, start_date="", end_date=""):
     """ get rank data for kws or landing pages, default dates set in date_select() fx """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
@@ -224,10 +211,6 @@ def get_ranks(request, page, start_date="", end_date=""):
     else:
         object_id = 'page_id'
         page_name = 'Pages'
-
-    """
-    unique view code
-    """
 
     rank_objects = LogSeRank.objects.filter(position__gt=0, client_id=client_id)
 
@@ -269,9 +252,6 @@ def get_ranks(request, page, start_date="", end_date=""):
 def get_ranks_datatable(request, page):
     """ produces the datatable section of get_ranks """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
@@ -323,17 +303,11 @@ def get_ranks_datatable(request, page):
 def get_phrase(request, phrase):
     """ get data on a particular search query """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
-    """
-    unique view code
-    """
     phrase_name = Kw.objects.filter(pk=phrase)
 
     rank_ts = LogSeRank.objects.filter(phrase_id=phrase, position__gt=0)
@@ -387,17 +361,10 @@ def get_phrase(request, phrase):
 def get_landing_pages(request, start_date="", end_date=""):
     """ get landing pages data """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
-
-    """
-    unique view code
-    """
 
     landing_pages = LogSeRank.objects \
                              .values('page_id', 'page_id__page') \
@@ -418,6 +385,7 @@ def get_landing_pages(request, start_date="", end_date=""):
     ip_cnt        = landing_pages.annotate(num_ip=Count('ip', distinct=True))
 
     # http://stackoverflow.com/questions/5501810/join-two-lists-of-dictionaries-on-a-single-key
+    # nice to create a separate function in utils/view.py for this as we use it in get_page as well
     d = defaultdict(dict)
     for item in (landing_pages, gcount, bing_cnt, yahoo_cnt, phrase_cnt, ip_cnt):
         for elem in item:
@@ -458,17 +426,10 @@ def get_landing_pages(request, start_date="", end_date=""):
 def get_page(request, page):
     """ get data for single landing page """
 
-    """
-    common code that needs to learn abotu DRY
-    """
     # client from form
     client_id = client_select(request.GET)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
-
-    """
-    unique view code
-    """
 
     page_name = Page.objects.filter(pk=page)
 
@@ -501,6 +462,7 @@ def get_page(request, page):
     yahoo_cnt = kws.filter(engine_id__engine__contains='Yahoo') \
                    .annotate(num_yahoo=Count('engine_id'))
 
+    # http://stackoverflow.com/questions/5501810/join-two-lists-of-dictionaries-on-a-single-key
     d = defaultdict(dict)
     for item in (kws, ip_cnt, gcount, bing_cnt, yahoo_cnt):
         for elem in item:
