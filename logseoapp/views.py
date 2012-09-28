@@ -6,7 +6,7 @@ from datetime import timedelta
 from utils.view import date_select, client_select, last_full_week
 from utils.view import metrics_processing_row1, metrics_processing_row2
 from utils.view import bigram_stats, process_time_series, get_datatables_records
-from logseoapp.models import LogSeRank, Kw, Page, Client
+from logseoapp.models import LogSeRank, Kw, Page
 from django.db.models import Avg, Count, StdDev, Min, Max
 from collections import defaultdict
 from operator import itemgetter
@@ -21,9 +21,6 @@ def home(request, client_id=""):
 
     # client from form
     client_id = client_select(request.GET)
-
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
 
     # latest week in our db
     latest_sunday, week_ago = last_full_week(client_id)
@@ -99,7 +96,6 @@ def home(request, client_id=""):
     return render(request, 'dashboard/index.html', {'client_id': client_id,
                                                     'metrics_row1_dict': metrics_row1_dict,
                                                     'metrics_row2_dict': metrics_row2_dict,
-                                                    'client': client,
                                                     'unique': unique,
                                                     'last_week': last_week,
                                                     'wk_bf_last': wk_bf_last,
@@ -119,9 +115,6 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
     # client from form
     client_id = client_select(request.GET)
 
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
-
     # latest week in our db
     latest_sunday, week_ago = last_full_week(client_id)
 
@@ -137,7 +130,6 @@ def home_engine_detail(request, engine, client_id="", ranked=""):
 
     return render(request, 'dashboard/engine_detail.html', {'week_ago': week_ago,
                                                             'latest_date': latest_sunday,
-                                                            'client': client,
                                                             'client_id': client_id,
                                                             'data': data})
 
@@ -150,9 +142,6 @@ def get_queries(request):
     """
     # client from form
     client_id = client_select(request.GET)
-
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
@@ -179,7 +168,6 @@ def get_queries(request):
                                             'end_date': end_date,
                                             'first_data_date': first_data_date,
                                             'last_data_date': last_data_date,
-                                            'client': client,
                                             'client_id': client_id,
                                             'all_phrase': all_phrase,
                                             'all_phrase_cnt': all_phrase_cnt,
@@ -227,9 +215,6 @@ def get_ranks(request, page, start_date="", end_date=""):
     # client from form
     client_id = client_select(request.GET)
 
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
-
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
     if page == 'queries':
@@ -271,7 +256,6 @@ def get_ranks(request, page, start_date="", end_date=""):
                                           'end_date': end_date,
                                           'first_data_date': first_data_date,
                                           'last_data_date': last_data_date,
-                                          'client': client,
                                           'client_id': client_id,
                                           'largest_position': largest_position,
                                           'page_name': page_name,
@@ -290,8 +274,6 @@ def get_ranks_datatable(request, page):
     """
     # client from form
     client_id = client_select(request.GET)
-
-    # client name
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
@@ -347,9 +329,6 @@ def get_phrase(request, phrase):
     # client from form
     client_id = client_select(request.GET)
 
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
-
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
     """
@@ -396,7 +375,6 @@ def get_phrase(request, phrase):
                                            'end_date': end_date,
                                            'first_data_date': first_data_date,
                                            'last_data_date': last_data_date,
-                                           'client': client,
                                            'client_id': client_id,
                                            'ip_chart': ip_chart,
                                            'phrase_name': phrase_name,
@@ -414,9 +392,6 @@ def get_landing_pages(request, start_date="", end_date=""):
     """
     # client from form
     client_id = client_select(request.GET)
-
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
@@ -473,7 +448,6 @@ def get_landing_pages(request, start_date="", end_date=""):
                                                   'end_date': end_date,
                                                   'first_data_date': first_data_date,
                                                   'last_data_date': last_data_date,
-                                                  'client': client,
                                                   'client_id': client_id,
                                                   'combo': combo,
                                                   'all_page': all_page,
@@ -489,9 +463,6 @@ def get_page(request, page):
     """
     # client from form
     client_id = client_select(request.GET)
-
-    # client name
-    client = Client.objects.values('name').filter(pk=client_id)
 
     start_date, end_date, first_data_date, last_data_date = date_select(request.GET, client_id)
 
@@ -540,7 +511,6 @@ def get_page(request, page):
                                          'end_date': end_date,
                                          'first_data_date': first_data_date,
                                          'last_data_date': last_data_date,
-                                         'client': client,
                                          'client_id': client_id,
                                          'ip_chart': ip_chart,
                                          'rankings_chart': rankings_chart,

@@ -141,6 +141,7 @@ TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
     #'django.contrib.messages.context_processors.messages',
 
     'logseoapp.context_processors.client_form',
+    'logseoapp.context_processors.client_name',
 
 )
 INSTALLED_APPS = (
