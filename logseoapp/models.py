@@ -11,6 +11,7 @@ from django.db import models
 from django.forms import ModelForm
 from taggit.managers import TaggableManager
 from django.db.models import Avg, Count
+from django.contrib.auth.models import User
 
 
 class Client(models.Model):
@@ -95,9 +96,28 @@ class LogSeRank(models.Model):
     engine_id = models.ForeignKey('Engine', db_column='engine_id')
     client_id  = models.ForeignKey('Client', db_column='client_id')
     http = models.TextField()
-    refdate = models.CharField(max_length=765)
+    refdate = models.DateField()
     reftime = models.CharField(max_length=765)
     objects = LogSeRankCntManager()
 
     class Meta:
         db_table = u'logseoapp_log_se_rank'
+
+
+class WatchListKw(models.Model):
+
+    owner = models.ForeignKey(User)
+    phrase = models.ForeignKey('Kw')
+    refdate = models.DateField(auto_now_add=True)
+    last_update = models.DateField(auto_now=True)
+
+    def __unicode__(self):
+        return "%s: %s" % (self.owner.username, self.phrase.phrase)
+
+
+class WatchListKwNote(models.Model):
+
+    note = models.CharField(max_length=765)
+    parent = models.ForeignKey(WatchListKw)
+    refdate = models.DateField(auto_now_add=True)
+    last_update = models.DateField(auto_now=True)

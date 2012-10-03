@@ -21,7 +21,17 @@
             {% block content %}
 
             <p>coming soon</p>
-                {% endblock %}
+
+            {% for item in watchlist %}
+            <p>{{ item.phrase__phrase }}, {{ item.watchlistkwnote__note }}, {{ item.refdate }}</p>
+            {% endfor %}
+
+           <form action="" method="post">{% csrf_token %}
+               {{ form.as_p }}
+               {{ kw_note_formset.as_table }}
+                <input type="submit" value="Submit" />
+            </form>
+            {% endblock %}
             </div>
             
             {% endblock %}

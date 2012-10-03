@@ -1,13 +1,16 @@
 from __future__ import division
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
 from datetime import timedelta
 # logseo utility functions
 from utils.view import date_select, client_select, last_full_week
 from utils.view import metrics_processing_row1, metrics_processing_row2
 from utils.view import bigram_stats, process_time_series, get_datatables_records
-from logseoapp.models import LogSeRank, Kw, Page
+from django.contrib.auth.models import User
+from logseoapp.models import LogSeRank, Kw, Page, WatchListKw
 from django.db.models import Avg, Count, StdDev, Min, Max
+from logseoapp.forms import WatchListKwForm, KwNoteFormSet
 from collections import defaultdict
 from operator import itemgetter
 import json
@@ -483,5 +486,28 @@ def get_page(request, page):
 
 def get_watchlist(request):
     """ get/create watchlist """
+    # user = request.user.id
+    watchlist = WatchListKw.objects.filter(owner=request.user.id) \
+                                   .values('phrase__phrase', 'watchlistkwnote__note', 'refdate') \
+                                   .order_by('-refdate', 'phrase__phrase')
 
-    return render(request, 'watchlist.html', {})
+    if request.method == 'POST':  # If the form has been submitted...
+        form = WatchListKwForm(request.POST)  # A form bound to the POST data
+
+        if form.is_valid():  # All validation rules pass
+
+            watchlist_kw = form.save(commit=False)
+            kw_note_formset = KwNoteFormSet(request.POST, instance=watchlist_kw)
+
+            if kw_note_formset.is_valid():
+                watchlist_kw.save()
+                kw_note_formset.save()
+
+            return HttpResponseRedirect('/watchlist/')  # Redirect after POST
+    else:
+        u = User.objects.get(pk=request.user.id)
+        form = WatchListKwForm(instance=u)
+        form.fields['owner'].initial = request.user
+        kw_note_formset = KwNoteFormSet(instance=WatchListKw())
+
+    return render(request, 'watchlist.html', {'watchlist': watchlist, 'form': form, 'kw_note_formset': kw_note_formset})
