@@ -486,6 +486,8 @@ def get_page(request, page):
 
 def get_watchlist(request):
     """ get/create watchlist """
+
+    client_id = client_select(request.GET)
     # user = request.user.id
     watchlist = WatchListKw.objects.filter(owner=request.user.id) \
                                    .values('phrase__phrase', 'watchlistkwnote__note', 'refdate') \
@@ -510,4 +512,7 @@ def get_watchlist(request):
         form.fields['owner'].initial = request.user
         kw_note_formset = KwNoteFormSet(instance=WatchListKw())
 
-    return render(request, 'watchlist.html', {'watchlist': watchlist, 'form': form, 'kw_note_formset': kw_note_formset})
+    return render(request, 'watchlist.html', {'client_id': client_id,
+                                              'watchlist': watchlist,
+                                              'form': form,
+                                              'kw_note_formset': kw_note_formset})

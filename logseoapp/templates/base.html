@@ -56,7 +56,7 @@
                     <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/queries/ranks/?client_list={{ client_id }}">Ranked Queries</a></li>
                     <li {% if request.path = '/landing_pages/' %} class="active"{% endif %}><a href="/landing_pages/?client_list={{ client_id }}">Landing Pages</a></li>                      
                     <li {% if request.path = '/landing_pages/ranked/' %} class="active"{% endif %}><a href="/landing_pages/ranks/?client_list={{ client_id }}">Ranked Landing Pages</a></li>  
-                    <li {% if request.path = '/watchlist/' %} class="active"{% endif %}><a href="/watchlist/">Watch List</a></li> 
+                    <li {% if request.path = '/watchlist/' %} class="active"{% endif %}><a href="/watchlist/?client_list={{ client_id }}">Watch List</a></li> 
                 </ul>
             </div><!--/.nav-collapse -->
            
