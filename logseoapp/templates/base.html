@@ -48,14 +48,14 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </a>
-            <a class="brand" href="/">logSEO</a>    
+            <a class="brand" href="/?client_list={{ client_id }}">logSEO</a>    
              <div class="nav-collapse collapse">
                 <ul class="nav">      
-                    <li {% if request.path = '/' %} class="active"{% endif %}><a href="/">Home</a></li>
-                    <li {% if request.path = '/queries/' %} class="active"{% endif %}><a href="/queries/">Queries</a></li>
-                    <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/queries/ranks/">Ranked Queries</a></li>
-                    <li {% if request.path = '/landing_pages/' %} class="active"{% endif %}><a href="/landing_pages/">Landing Pages</a></li>                      
-                    <li {% if request.path = '/landing_pages/ranked/' %} class="active"{% endif %}><a href="/landing_pages/ranks/">Ranked Landing Pages</a></li>  
+                    <li {% if request.path = '/' %} class="active"{% endif %}><a href="/?client_list={{ client_id }}">Home</a></li>
+                    <li {% if request.path = '/queries/' %} class="active"{% endif %}><a href="/queries/?client_list={{ client_id }}">Queries</a></li>
+                    <li {% if request.path = '/ranks/' %} class="active"{% endif %}><a href="/queries/ranks/?client_list={{ client_id }}">Ranked Queries</a></li>
+                    <li {% if request.path = '/landing_pages/' %} class="active"{% endif %}><a href="/landing_pages/?client_list={{ client_id }}">Landing Pages</a></li>                      
+                    <li {% if request.path = '/landing_pages/ranked/' %} class="active"{% endif %}><a href="/landing_pages/ranks/?client_list={{ client_id }}">Ranked Landing Pages</a></li>  
                     <li {% if request.path = '/watchlist/' %} class="active"{% endif %}><a href="/watchlist/">Watch List</a></li> 
                 </ul>
             </div><!--/.nav-collapse -->

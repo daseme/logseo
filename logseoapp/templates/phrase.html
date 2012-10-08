@@ -219,7 +219,7 @@ $(document).ready(function() {
                     {% for page in rank_list %}
                     <tr>
                         <td>
-                            <a href="/landing_pages/page/{{ page.list.0.page_id }}">{{ page.grouper }}</a>
+                            <a href="/landing_pages/page/{{ page.list.0.page_id }}/?client_list={{ request.GET.client_list }}">{{ page.grouper }}</a>
                         </td>
                         <td>
                             <span class="inlinesparkline" style="width:40px;">

@@ -196,7 +196,7 @@ def get_queries_datatable(request):
     jsonTemplatePath = 'queries_json.txt'
 
     #call to generic function from utils
-    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath)
+    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath, client_id)
 
 
 def get_ranks(request, page, start_date="", end_date=""):
