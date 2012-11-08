@@ -1,0 +1,18 @@
+{% load crispy_forms_tags %}
+
+
+<form class="well contact-form" action="/form_watchlist_kw/?phrase_id={{ phrase_id }}" method="post">      
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">×</button>
+        <h3>Adding WatchList Item # {{ phrase_id }}</h3>
+    </div>
+    <div class="modal-body">
+        {% crispy form form.helper %}
+        {% crispy kw_note_formset kw_note_formset.form.helper %}
+    </div>
+  <div class="modal-footer">
+       <input class="btn btn-primary" type="submit" value="Save" />
+       <input name="cancel" class="btn" type="submit" value="Cancel"/>
+  </div>
+</form>    
+
