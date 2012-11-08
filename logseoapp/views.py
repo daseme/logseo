@@ -1,7 +1,6 @@
 from __future__ import division
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
 from datetime import timedelta
 # logseo utility functions
 from utils.view import date_select, client_select, last_full_week
@@ -14,7 +13,7 @@ from logseoapp.forms import WatchListKwForm, KwNoteFormSet
 from collections import defaultdict
 from operator import itemgetter
 import json
-#from django.db import connection
+from django.db import connection
 
 
 @login_required
@@ -187,16 +186,17 @@ def get_queries_datatable(request):
                                 client_id=client_id) \
                         .annotate(num_ips=Count('ip', distinct=True),
                                   num_pages=Count('page_id', distinct=True),
+                                  num_watchlist=Count('phrase_id__watchlistkw', distinct=True),  # ???
                                   num_engines=Count('engine_id', distinct=True)) \
-                        .order_by('phrase_id__phrase') \
+                        .order_by('phrase_id__phrase')
 
     #columnIndexNameMap is required for correct sorting behavior
-    columnIndexNameMap = {0: 'phrase_id__phrase', 1: 'num_ips', 2: 'num_pages', 3: 'num_engines'}
+    columnIndexNameMap = {0: 'phrase_id__phrase', 1: 'num_ips', 2: 'num_pages', 3: 'num_engines', 4: 'add'}
     #path to template used to generate json (optional)
     jsonTemplatePath = 'queries_json.txt'
 
     #call to generic function from utils
-    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath, client_id)
+    return get_datatables_records(request, querySet, columnIndexNameMap, jsonTemplatePath)
 
 
 def get_ranks(request, page, start_date="", end_date=""):
@@ -317,20 +317,23 @@ def get_phrase(request, phrase):
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
 
+    # remove case where y is 0, meaning we found no position > 0, for a given day
+    # basically qsstats-magic adds 0 for days in which no values were found
+    rankings_chart[:] = [d for d in rankings_chart if d.get('y') != 0]
+
     # for setting domain of chart
     largest_position = max(item['y'] for item in rankings_chart)
-
-    rankings = LogSeRank.objects \
-                        .values('position') \
-                        .filter(position__gt=0,
-                                phrase_id=phrase,
-                                refdate__range=[start_date, end_date]) \
-                        .order_by('refdate')
 
     ip_ts = LogSeRank.objects.filter(phrase_id=phrase, client_id=client_id)
 
     ip_chart = process_time_series(ip_ts, start_date, end_date, 'refdate',
                                    Count('ip', distinct=True))
+
+    all_phrase_cnt = sum(item['y'] for item in ip_chart)
+
+    all_rank_cnt = sum(item['y'] for item in rankings_chart)
+
+    all_phrase_avg = round(all_rank_cnt / len(rankings_chart))
 
     ip_chart = json.dumps(ip_chart, sort_keys=True)
 
@@ -354,9 +357,11 @@ def get_phrase(request, phrase):
                                            'first_data_date': first_data_date,
                                            'last_data_date': last_data_date,
                                            'ip_chart': ip_chart,
+                                           'all_phrase_cnt': all_phrase_cnt,
+                                           'all_phrase_avg': all_phrase_avg,
                                            'phrase_name': phrase_name,
-                                           'rankings': rankings,
                                            'rankings_chart': rankings_chart,
+                                           'rank_ts': rank_ts,
                                            'largest_position': largest_position,
                                            'pages': pages})
 
@@ -439,11 +444,20 @@ def get_page(request, page):
     rank_ts  = LogSeRank.objects.filter(page_id=page, position__gt=0)
 
     rankings_chart = process_time_series(rank_ts, start_date, end_date, 'refdate', Avg('position'))
+    # remove case where y is 0, meaning we found no position > 0, for a given day
+    # basically qsstats-magic adds 0 for days in which no values were found
+    rankings_chart[:] = [d for d in rankings_chart if d.get('y') != 0]
     largest_position = max(item['y'] for item in rankings_chart)
 
     ip_ts = LogSeRank.objects.filter(page_id=page, client_id=client_id)
 
     ip_chart = process_time_series(ip_ts, start_date, end_date, 'refdate', Count('ip', distinct=True))
+
+    all_page_cnt = sum(item['y'] for item in ip_chart)
+
+    all_rank_cnt = sum(item['y'] for item in rankings_chart)
+
+    all_page_avg = round(all_rank_cnt / len(rankings_chart))
 
     ip_chart = json.dumps(ip_chart, sort_keys=True)
 
@@ -479,6 +493,8 @@ def get_page(request, page):
                                          'last_data_date': last_data_date,
                                          'ip_chart': ip_chart,
                                          'rankings_chart': rankings_chart,
+                                         'all_page_cnt': all_page_cnt,
+                                         'all_page_avg': all_page_avg,
                                          'largest_position': largest_position,
                                          'page_name': page_name,
                                          'kws': combo})
@@ -493,8 +509,33 @@ def get_watchlist(request):
                                    .values('phrase__phrase', 'watchlistkwnote__note', 'refdate') \
                                    .order_by('-refdate', 'phrase__phrase')
 
-    if request.method == 'POST':  # If the form has been submitted...
+    return render(request, 'watchlist.html', {'client_id': client_id,
+                                              'watchlist': watchlist})
+
+
+def add_watchlist_kw(request):
+    """ add form for watchlist kws """
+
+    client_id = client_select(request.GET)
+
+    if request.GET:
+        phrase_id = request.GET['phrase_id']
+    else:
+        phrase_id = request.POST['phrase_id']
+
+    u = User.objects.get(pk=request.user.id)
+
+    form = WatchListKwForm(instance=u)  # A form bound to the POST data
+    kw_note_formset = KwNoteFormSet(instance=WatchListKw())
+
+    form.fields['owner'].initial = request.user.id
+    # form.fields['phrase'].initial = phrase_id
+    form.fields['phrase'].queryset = Kw.objects.filter(pk=phrase_id)
+    form.fields['phrase'].initial = phrase_id
+
+    if request.method == 'POST':
         form = WatchListKwForm(request.POST)  # A form bound to the POST data
+        kw_note_formset = KwNoteFormSet(instance=WatchListKw())
 
         if form.is_valid():  # All validation rules pass
 
@@ -505,14 +546,14 @@ def get_watchlist(request):
                 watchlist_kw.save()
                 kw_note_formset.save()
 
-            return HttpResponseRedirect('/watchlist/')  # Redirect after POST
-    else:
-        u = User.objects.get(pk=request.user.id)
-        form = WatchListKwForm(instance=u)
-        form.fields['owner'].initial = request.user
-        kw_note_formset = KwNoteFormSet(instance=WatchListKw())
+                return redirect('/watchlist_success/?phrase_id=' + phrase_id)  # Redirect after POST
 
-    return render(request, 'watchlist.html', {'client_id': client_id,
-                                              'watchlist': watchlist,
-                                              'form': form,
-                                              'kw_note_formset': kw_note_formset})
+    return render(request, 'form_watchlist_kw.html', {'client_id': client_id,
+                                                      'form': form,
+                                                      'phrase_id': phrase_id,
+                                                      'kw_note_formset': kw_note_formset})
+
+
+def watchlist_success(request):
+
+    return render(request, 'watchlist_success.html', {},)

@@ -139,10 +139,10 @@ $(document).ready(function() {
                     <div id="chart"><svg style="height: 200px;"></svg></div>
                 </div>
                 <div class="span2">
-                    <div class="sidestat"><h4>Ranked Queries</h4><span class="number">35</span></div>
+                    <div class="sidestat"><h4>Total Visitors</h4><span class="number">{{ all_page_cnt }}</span></div>
                 </div>
                 <div class="span2">
-                    <div class="sidestat"><h4>Avg Rank</h4><span class="number">35</span></div>
+                    <div class="sidestat"><h4>Avg Rank</h4><span class="number">{{ all_page_avg }}</span></div>
                 </div>
             </div>
         </div>
@@ -160,11 +160,11 @@ $(document).ready(function() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>{% for dict in page_name %}
-                        <td>{{ dict.page }}</td>
-                        {% endfor %}
-                        <td>na</td>
-                        <td>na</td>
+                    <tr>
+                        <td>{{ page_name.0.page }}</td>
+                       
+                        <td>{{ page_name.0.first_seen }}</td>
+                        <td>{{ page_name.0.last_seen }}</td>
                         <td>na</td>
                     </tr>
             </table>

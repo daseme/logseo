@@ -116,8 +116,32 @@ $.extend( $.fn.dataTableExt.oPagination, {
 } );
 $(document).ready(function() {
     var oTable = $('#example').dataTable( {
-        	"fnDrawCallback": function() { //call sparkline init after row drawn
-            },
+        "fnDrawCallback": function() { //call bootstrap modal init after row drawn
+            $(".contact").click(function(ev) { // for each edit contact url
+                ev.preventDefault(); // prevent navigation
+                var url = $(this).data("form"); // get the contact form url
+                $("#contactModal").load(url, function() { // load the url into the modal
+                    $(this).modal('show'); // display the modal on url load
+                });
+                return false; // prevent the click propagation
+            });
+
+
+            $('.contact-form').live('submit', function() {
+                $.ajax({ 
+                    type: $(this).attr('method'), 
+                    url: this.action, 
+                    data: $(this).serialize(),
+                    context: this,
+                    success: function(data, status) {
+                        $('#contactModal').html(data);
+                        //$('#contactModal').modal('hide');
+                    }
+
+                });
+                return false;
+            });
+        },
             "bPaginate": true,
             'bProcessing': true,
             "bServerSide": true,
@@ -132,7 +156,8 @@ $(document).ready(function() {
 						{ "bSearchable": true, "sClass": "left" },
 					    null,
 						null,
-                        null
+                        null,
+                        { "bSearchable": false, "sClass": "left" } //non-database column requires no search
 					]
                     });
 
@@ -181,6 +206,7 @@ $(document).ready(function() {
 			<th>Organic Visitors</th>
 			<th># Pages</th>
             <th># Engines</th>
+            <th>Add2Watch</th>
 
       </tr>
       </thead>
@@ -234,6 +260,12 @@ function data() {
 
 </script>
 
+
+
+<div id="contactModal" class="modal hide fade"></div>
+
+
+{{ sql }}
 </div></div>
 {% endblock %}
 

@@ -5,8 +5,8 @@ from logseoapp.views import *
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns('',
-
+urlpatterns = patterns(
+    '',
     url(r'^(queries|landing_pages)/ranks/$', 'logseoapp.views.get_ranks'),
         url(r'^(queries|landing_pages)/ranks/ajax/get-ranks-datatable/$', 'logseoapp.views.get_ranks_datatable'),
 
@@ -21,6 +21,8 @@ urlpatterns = patterns('',
     url(r'^engines/(\w+)/$', 'logseoapp.views.home_engine_detail'),
     url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^watchlist/', 'logseoapp.views.get_watchlist'),
+        url(r'^form_watchlist_kw/', 'logseoapp.views.add_watchlist_kw'),
+        url(r'^watchlist_success/', 'logseoapp.views.watchlist_success'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

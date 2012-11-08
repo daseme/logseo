@@ -155,10 +155,10 @@ $(document).ready(function() {
                     <div id="chart"><svg style="height: 200px;"></svg></div>
                 </div>
                 <div class="span2">
-                    <div class="sidestat"><h4>Ranked Queries</h4><span class="number">35</span></div>
+                    <div class="sidestat"><h4>Total Visitors</h4><span class="number">{{ all_phrase_cnt }}</span></div>
                 </div>
                 <div class="span2">
-                    <div class="sidestat"><h4>Avg Rank</h4><span class="number">35</span></div>
+                    <div class="sidestat"><h4>Avg Rank</h4><span class="number">{{ all_phrase_avg }}</span></div>
                 </div>
             </div>
         </div>
@@ -295,4 +295,5 @@ function data() {
 
 </script>
 
-            {% endblock %}
+{% endblock %}
+

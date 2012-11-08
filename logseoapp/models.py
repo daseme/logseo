@@ -114,6 +114,9 @@ class WatchListKw(models.Model):
     def __unicode__(self):
         return "%s: %s" % (self.owner.username, self.phrase.phrase)
 
+    class Meta:
+        unique_together = ("owner", "phrase")
+
 
 class WatchListKwNote(models.Model):
 

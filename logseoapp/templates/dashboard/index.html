@@ -116,7 +116,7 @@
                     </div>
                 </div>
                 <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
-                    <tr><td>phrase</td><td>date</td><td>ips</td></tr>
+                    <tr><td>Query</td><td>Date</td><td>Visitors</td></tr>
                     {% for item in dict.query_result|slice:":5" %}
                     <tr>
                         <td><a href="/queries/individual-query/{{item.phrase_id}}/?end_date={{ latest_date|date:"Y-m-d" }}&start_date={{ week_ago|date:"Y-m-d" }}&client_list={{ client_id }}" style="text-decoration:none;">{{ item.phrase_id__phrase }}</a></td>
@@ -140,7 +140,7 @@
                 <h2>Missing Queries</h2>
                 {{ missing_queries_txt }}
                 <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="example">
-                    <tr><td>phrase</td><td>prior cnt</td></tr>
+                    <tr><td>Query</td><td>prior cnt</td></tr>
                     {% for dict in missing_queries|slice:":5" %}
                     <tr>
                         <td><a href="/queries/individual-query/{{dict.phrase_id}}/?end_date={{ latest_date|date:"Y-m-d" }}&start_date={{ week_ago|date:"Y-m-d" }}&client_list={{ client_id }}" style="text-decoration:none;">{{ dict.phrase }}</a></td>

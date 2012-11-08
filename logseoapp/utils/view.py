@@ -91,6 +91,7 @@ def process_time_series(query,
     # do some formatting cleanup of qsstats ->convert to epoch time (not dealing with local time!!)
     # note *1000 for consumption by javascript
     # note hacky +14400 so we don't get one day off errors.  needs fixing!!
+
     return [{"x":(time.mktime(e[0].timetuple()) + 14400) * 1000, "y":e[1]} for e in time_series]
 
 

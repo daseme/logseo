@@ -119,7 +119,7 @@ JOHNNY_MIDDLEWARE_KEY_PREFIX = 'logseoapp'
 ROOT_URLCONF = 'logseo.urls'
 
 TEMPLATE_DIRS = (
-    "/home/kurt/websites/logseo/logseoapp/",
+    "/home/kurt/websites/logseo/logseoapp/templates",
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -159,8 +159,11 @@ INSTALLED_APPS = (
     'logseoapp',
     'south',
     'taggit',
+    'crispy_forms',
 
 )
+CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

@@ -9,7 +9,13 @@
         "<a href='/queries/individual-query/{{ item.phrase_id }}/?client_list={{ request.GET.client_list }}'>{{ item.phrase_id__phrase }}</a>",
         "{{ item.num_ips }}",
         "{{ item.num_pages }}",
-        "{{ item.num_engines }}"
+        "{{ item.num_engines }}",
+        {% if item.num_watchlist = 0 %}
+        "<a class='contact' href='#' data-form='/form_watchlist_kw/?phrase_id={{ item.phrase_id }}' data-toggle='modal' title='Add'>add query</a>"
+        {% else %}
+        "<a class='contact' href='#' data-form='/form_watchlist_kw/?phrase_id={{ item.phrase_id }}' data-toggle='modal' title='Add'>add note</a>"
+        {% endif %}
+
     ]
     {% if not forloop.last %}
     ,
