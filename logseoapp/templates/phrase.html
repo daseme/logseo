@@ -243,7 +243,47 @@ $(document).ready(function() {
                 {% endblock %}
             </div>
 
+            {% if largest_position = 0 %}
+<script>
+nv.addGraph(function() {
+    
+    var chart = nv.models.lineChart();
 
+    chart.xAxis
+    .tickFormat(function(d) {
+        return d3.time.format('%x')(new Date(d))
+    });
+    chart.xAxis.tickPadding([12]) //add head space to x-axis labels
+	  
+    chart.yAxis.tickFormat(d3.format(',.2f'));
+
+    d3.select('#chart svg')
+    .datum(data())
+    .transition().duration(500)
+    .call(chart);
+
+    nv.utils.windowResize(chart.update);
+ 
+    return chart;
+ });
+
+function data() {
+
+    return [
+    {
+      "values": {{ ip_chart|safe }},
+      "key": "Visitors",
+      "color": "#E9967A",
+      "bar": true
+  }
+  
+  
+  ];
+    }
+
+</script>
+
+            {% else %}
 <script>
 nv.addGraph(function() {
     
@@ -294,6 +334,6 @@ function data() {
     }
 
 </script>
-
+{% endif %}
 {% endblock %}
 

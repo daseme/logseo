@@ -322,7 +322,15 @@ def get_phrase(request, phrase):
     rankings_chart[:] = [d for d in rankings_chart if d.get('y') != 0]
 
     # for setting domain of chart
-    largest_position = max(item['y'] for item in rankings_chart)
+    if len(rankings_chart) > 0:
+        largest_position = max(item['y'] for item in rankings_chart)
+        all_rank_cnt = sum(item['y'] for item in rankings_chart)
+        all_phrase_avg = round(all_rank_cnt / len(rankings_chart))
+
+    else:
+        largest_position = 0
+        all_rank_cnt = 0
+        all_phrase_avg = 0
 
     ip_ts = LogSeRank.objects.filter(phrase_id=phrase, client_id=client_id)
 
@@ -330,10 +338,6 @@ def get_phrase(request, phrase):
                                    Count('ip', distinct=True))
 
     all_phrase_cnt = sum(item['y'] for item in ip_chart)
-
-    all_rank_cnt = sum(item['y'] for item in rankings_chart)
-
-    all_phrase_avg = round(all_rank_cnt / len(rankings_chart))
 
     ip_chart = json.dumps(ip_chart, sort_keys=True)
 
@@ -447,7 +451,12 @@ def get_page(request, page):
     # remove case where y is 0, meaning we found no position > 0, for a given day
     # basically qsstats-magic adds 0 for days in which no values were found
     rankings_chart[:] = [d for d in rankings_chart if d.get('y') != 0]
-    largest_position = max(item['y'] for item in rankings_chart)
+
+    if len(rankings_chart) > 0:
+        largest_position = max(item['y'] for item in rankings_chart)
+
+    else:
+        largest_position = 1
 
     ip_ts = LogSeRank.objects.filter(page_id=page, client_id=client_id)
 
